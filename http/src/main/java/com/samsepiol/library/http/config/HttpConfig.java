@@ -1,5 +1,6 @@
 package com.samsepiol.library.http.config;
 
+import jakarta.annotation.PostConstruct;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -8,25 +9,25 @@ import org.springframework.http.HttpMethod;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Configuration
 @ConfigurationProperties(prefix = "http-config")
 @Data
 public class HttpConfig {
-    private Boolean enableAsync;
     private Map<String, ServiceConfig> serviceConfigs;
+    private List<HttpConfigService> httpConfigServices;
 
     @Autowired
     public HttpConfig(List<HttpConfigService> httpConfigServices) {
-        serviceConfigs = httpConfigServices.stream()
-                .flatMap(httpConfigService -> httpConfigService.getConfig().entrySet().stream())
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        this.httpConfigServices = httpConfigServices;
     }
 
-    public boolean asyncEnabled() {
-        return Objects.requireNonNullElse(enableAsync, Boolean.FALSE);
+    @PostConstruct
+    public void init() {
+        serviceConfigs.putAll(httpConfigServices.stream()
+                .flatMap(httpConfigService -> httpConfigService.getConfig().entrySet().stream())
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
     }
 
     public ServiceConfig getServiceConfig(String service) {
