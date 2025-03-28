@@ -1,0 +1,19 @@
+name: Build Library
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build-bom:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Build Library
+        run: |
+          DOCKER_BUILDKIT=1 docker build .
+      - name: Prune Dangling images
+        run: |
+          docker image prune -f
