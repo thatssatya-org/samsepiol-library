@@ -16,7 +16,7 @@ RUN --mount=type=cache,target=/root/.m2 \
 # Copy the rest of the source code
 COPY http ./http
 COPY library-core ./library-core
-COPY mongo/pom.xml ./mongo/
+COPY mongo ./mongo
 COPY temporal ./temporal
 COPY library-application ./library-application
 
