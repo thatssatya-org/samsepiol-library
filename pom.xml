@@ -5,7 +5,7 @@
     <parent>
         <groupId>com.samsepiol</groupId>
         <artifactId>bom</artifactId>
-        <version>0.0.2-BOM-SNAPSHOT</version>
+        <version>0.0.3-BOM-SNAPSHOT</version>
         <relativePath/>
     </parent>
     <groupId>com.samsepiol.library</groupId>

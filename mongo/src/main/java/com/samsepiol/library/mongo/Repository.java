@@ -2,6 +2,7 @@ package com.samsepiol.library.mongo;
 
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.Updates;
 import com.samsepiol.library.core.util.DateTimeUtils;
 import com.samsepiol.library.mongo.constants.EntityConstants;
@@ -47,26 +48,38 @@ public interface Repository {
                 .into(new ArrayList<>());
     }
 
+    default <T extends Entity> List<T> findAll(String collectionName, Bson query, Class<T> clazz) {
+        return getCollection(collectionName, clazz)
+                .find(query)
+                .into(new ArrayList<>());
+    }
+
     default <T extends Entity> T insert(String collectionName, T entity, Class<T> clazz) {
         entity.beforeInsert();
         getCollection(collectionName, clazz).insertOne(entity);
         return entity;
     }
 
-    default <T extends Entity> boolean updateById(String collectionName, String value, Bson updateQuery) {
+    default boolean updateById(String collectionName, String value, Bson updateQuery) {
         var query = Updates.combine(updateQuery, Updates.set(EntityConstants.UPDATED_AT, DateTimeUtils.currentEpochMillis()));
         var updateResult = getCollection(collectionName)
                 .updateOne(Filters.eq(EntityConstants.ID, value), query);
         return updateResult.getModifiedCount() > 0;
     }
 
-    default <T extends Entity> boolean update(String collectionName, String id, String value, Bson updateQuery) {
+    default boolean update(String collectionName, String id, String value, Bson updateQuery) {
 
         var query = Updates.combine(updateQuery, Updates.set(EntityConstants.UPDATED_AT, DateTimeUtils.currentEpochMillis()));
         var updateResult = getCollection(collectionName).updateMany(Filters.eq(id, value), query);
         return updateResult.getModifiedCount() > 0;
     }
 
+    default boolean upsertById(String collectionName, String value, Bson updateQuery) {
+        var query = Updates.combine(updateQuery, Updates.set(EntityConstants.UPDATED_AT, DateTimeUtils.currentEpochMillis()));
+        var updateResult = getCollection(collectionName)
+                .updateOne(Filters.eq(EntityConstants.ID, value), query, new UpdateOptions().upsert(Boolean.TRUE));
+        return updateResult.getModifiedCount() > 0;
+    }
 
     @NonNull
     MongoTemplate getMongoTemplate();
