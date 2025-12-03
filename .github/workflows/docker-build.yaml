@@ -6,7 +6,7 @@ on:
       - master
 
 jobs:
-  build-bom:
+  build-library:
     runs-on: self-hosted
     steps:
       - name: Checkout Repository
