@@ -86,4 +86,6 @@ public interface Repository {
 
     @NonNull
     CodecRegistry getCodecRegistry();
+
+    boolean isHealthy();
 }

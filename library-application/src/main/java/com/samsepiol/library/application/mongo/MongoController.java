@@ -2,6 +2,7 @@ package com.samsepiol.library.application.mongo;
 
 import com.samsepiol.library.application.mongo.models.Product;
 import com.samsepiol.library.application.mongo.repo.ProductRepository;
+import com.samsepiol.library.mongo.Repository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class MongoController {
     private final ProductRepository productRepository;
+    private final Repository repository;
 
     @PostMapping("/products")
     public ResponseEntity<Product> createProduct(@RequestBody Product product) {
@@ -33,5 +35,9 @@ public class MongoController {
         return ResponseEntity.ok(productRepository.update(product.getId(), product.getName()));
     }
 
+    @GetMapping("/health")
+    public ResponseEntity<Boolean> health() {
+        return ResponseEntity.ok(repository.isHealthy());
+    }
 
 }
