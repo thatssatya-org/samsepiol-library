@@ -20,6 +20,7 @@
         <module>http</module>
         <module>temporal</module>
         <module>library-application</module>
+        <module>mongo</module>
     </modules>
 
 </project>
