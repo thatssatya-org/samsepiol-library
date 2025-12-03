@@ -22,5 +22,11 @@
             <groupId>io.temporal</groupId>
             <artifactId>temporal-sdk</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>io.temporal</groupId>
+            <artifactId>temporal-testing</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 </project>

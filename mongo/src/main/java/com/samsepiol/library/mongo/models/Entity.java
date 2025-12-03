@@ -8,6 +8,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.ToString;
+import lombok.experimental.SuperBuilder;
 import org.bson.codecs.pojo.annotations.BsonId;
 
 import java.util.Objects;
@@ -16,6 +17,7 @@ import java.util.Objects;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode
+@SuperBuilder(builderMethodName = "parentBuilder")
 @ToString
 public abstract class Entity {
     @BsonId
