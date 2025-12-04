@@ -11,7 +11,7 @@ COPY cache/pom.xml ./cache/
 COPY cache/cache-core/pom.xml ./cache/cache-core/
 COPY cache/guava/pom.xml ./cache/guava/
 COPY cache/redis/pom.xml ./cache/redis/
-COPY lock/pom.xml ./lock
+COPY lock/pom.xml ./lock/
 COPY library-application/pom.xml ./library-application/
 
 # Download dependencies
