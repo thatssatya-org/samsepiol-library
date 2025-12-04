@@ -1,6 +1,6 @@
-package com.samsepiol.library.application.mongo.repo.codec.supplier;
+package com.samsepiol.library.application.repo.codec.supplier;
 
-import com.samsepiol.library.application.mongo.models.Product;
+import com.samsepiol.library.application.models.Product;
 import com.samsepiol.library.mongo.codec.CodecSupplier;
 import lombok.NonNull;
 import org.springframework.stereotype.Service;

@@ -1,6 +1,6 @@
-package com.samsepiol.library.application.mongo.repo;
+package com.samsepiol.library.application.repo;
 
-import com.samsepiol.library.application.mongo.models.Product;
+import com.samsepiol.library.application.models.Product;
 import lombok.NonNull;
 
 public interface ProductRepository {

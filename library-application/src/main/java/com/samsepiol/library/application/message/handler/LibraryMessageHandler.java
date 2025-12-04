@@ -1,4 +1,4 @@
-package com.samsepiol.library.application.mongo.message.handler;
+package com.samsepiol.library.application.message.handler;
 
 import com.samsepiol.message.queue.core.models.MessageHandlerType;
 

@@ -50,6 +50,12 @@
             <version>${project.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.samsepiol.library</groupId>
+            <artifactId>temporal</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
     </dependencies>
 
     <properties>
