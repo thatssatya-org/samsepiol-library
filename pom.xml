@@ -21,6 +21,14 @@
         <module>temporal</module>
         <module>library-application</module>
         <module>mongo</module>
+        <module>cache</module>
+        <module>cache/cache-core</module>
+        <module>cache/guava</module>
+        <module>cache/redis</module>
+        <module>lock</module>
+        <module>message-queue</module>
+        <module>message-queue/message-queue-core</module>
+        <module>message-queue/kafka</module>
     </modules>
 
 </project>

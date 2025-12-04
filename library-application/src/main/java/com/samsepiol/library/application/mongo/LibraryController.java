@@ -2,6 +2,7 @@ package com.samsepiol.library.application.mongo;
 
 import com.samsepiol.library.application.mongo.models.Product;
 import com.samsepiol.library.application.mongo.repo.ProductRepository;
+import com.samsepiol.library.cache.Cache;
 import com.samsepiol.library.mongo.Repository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -14,11 +15,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/v1/mongo")
+@RequestMapping("/v1/library")
 @RequiredArgsConstructor
-public class MongoController {
+public class LibraryController {
     private final ProductRepository productRepository;
     private final Repository repository;
+
+    private final Cache<String, String> cache;
 
     @PostMapping("/products")
     public ResponseEntity<Product> createProduct(@RequestBody Product product) {
@@ -35,9 +38,14 @@ public class MongoController {
         return ResponseEntity.ok(productRepository.update(product.getId(), product.getName()));
     }
 
-    @GetMapping("/health")
-    public ResponseEntity<Boolean> health() {
+    @GetMapping("/mongo/health")
+    public ResponseEntity<Boolean> mongoHealth() {
         return ResponseEntity.ok(repository.isHealthy());
+    }
+
+    @GetMapping("/redis/health")
+    public ResponseEntity<Boolean> redisHealth() {
+        return ResponseEntity.ok(cache.isHealthy());
     }
 
 }
