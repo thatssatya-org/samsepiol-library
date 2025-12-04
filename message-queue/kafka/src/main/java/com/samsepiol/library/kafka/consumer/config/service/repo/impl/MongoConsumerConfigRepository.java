@@ -2,9 +2,9 @@ package com.samsepiol.library.kafka.consumer.config.service.repo.impl;
 
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Updates;
+import com.samsepiol.library.kafka.consumer.config.service.repo.ConsumerConfigRepository;
 import com.samsepiol.library.kafka.consumer.config.service.repo.models.ConsumerConfigEntity;
 import com.samsepiol.library.kafka.consumer.config.service.repo.models.enums.ConsumerStatus;
-import com.samsepiol.library.kafka.consumer.config.service.repo.ConsumerConfigRepository;
 import com.samsepiol.library.mongo.Repository;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +23,12 @@ public class MongoConsumerConfigRepository implements ConsumerConfigRepository {
     @Override
     public @NonNull List<ConsumerConfigEntity> findActive() {
         var query = Filters.eq(ConsumerConfigEntity.STATUS_KEY, ConsumerStatus.ACTIVE);
+        return repository.findAll(COLLECTION_NAME, query, ConsumerConfigEntity.class);
+    }
+
+    @Override
+    public @NonNull List<ConsumerConfigEntity> findInactive() {
+        var query = Filters.eq(ConsumerConfigEntity.STATUS_KEY, ConsumerStatus.INACTIVE);
         return repository.findAll(COLLECTION_NAME, query, ConsumerConfigEntity.class);
     }
 

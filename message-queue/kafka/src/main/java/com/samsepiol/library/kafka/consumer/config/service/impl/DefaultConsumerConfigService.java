@@ -31,6 +31,11 @@ public class DefaultConsumerConfigService implements ConsumerConfigService {
     }
 
     @Override
+    public @NonNull List<ConsumerConfigEntity> findInactive() {
+        return repository.findInactive();
+    }
+
+    @Override
     public @NonNull Optional<ConsumerConfigEntity> findById(@NonNull String id) {
         return repository.findById(id);
     }

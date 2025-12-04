@@ -11,6 +11,8 @@ public interface ConsumerConfigService {
     @NonNull
     List<ConsumerConfigEntity> findActive();
 
+    @NonNull List<ConsumerConfigEntity> findInactive();
+
     @NonNull
     Optional<ConsumerConfigEntity> findById(@NonNull String id);
 
