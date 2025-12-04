@@ -7,28 +7,30 @@
         <groupId>com.samsepiol.library</groupId>
         <artifactId>library-root</artifactId>
         <version>0.0.2-LIBRARY-SNAPSHOT</version>
+        <relativePath>../../pom.xml</relativePath>
     </parent>
 
-    <artifactId>library-application</artifactId>
+    <artifactId>kafka</artifactId>
 
     <dependencies>
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-actuator</artifactId>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka</artifactId>
         </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
         <dependency>
-            <groupId>org.springdoc</groupId>
-            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-logging</artifactId>
         </dependency>
 
         <dependency>
             <groupId>com.samsepiol.library</groupId>
-            <artifactId>library-core</artifactId>
+            <artifactId>message-queue-core</artifactId>
             <version>${project.version}</version>
         </dependency>
 
@@ -37,23 +39,6 @@
             <artifactId>mongo</artifactId>
             <version>${project.version}</version>
         </dependency>
-
-        <dependency>
-            <groupId>com.samsepiol.library</groupId>
-            <artifactId>cache</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.samsepiol.library</groupId>
-            <artifactId>message-queue</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
     </dependencies>
-
-    <properties>
-        <project.mainClass>com.samsepiol.library.application.LibraryApplication</project.mainClass>
-    </properties>
 
 </project>
