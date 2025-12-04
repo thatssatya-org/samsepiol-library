@@ -4,6 +4,9 @@ import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
 
+import java.util.Collections;
+import java.util.Map;
+
 @Value
 @Builder
 public class MessageHandlerRequest {
@@ -11,4 +14,7 @@ public class MessageHandlerRequest {
     String key;
     @NonNull
     String value;
+    @NonNull
+    @Builder.Default
+    Map<String, String> headers = Collections.emptyMap();
 }
