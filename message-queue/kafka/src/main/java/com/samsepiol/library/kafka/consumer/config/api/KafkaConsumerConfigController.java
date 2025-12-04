@@ -18,7 +18,7 @@ import java.util.List;
 @RequestMapping("/api/consumers/kafka")
 @RequiredArgsConstructor
 @ConditionalOnProperty("spring.kafka.bootstrap-servers")
-public class ConsumerConfigController {
+public class KafkaConsumerConfigController {
     private final ConsumerConfigService consumerConfigService;
 
     @GetMapping("/active")
