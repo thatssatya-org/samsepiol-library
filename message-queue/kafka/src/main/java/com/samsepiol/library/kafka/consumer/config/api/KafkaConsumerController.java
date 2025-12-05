@@ -27,12 +27,14 @@ public class KafkaConsumerController {
 
     @GetMapping("/active")
     public ResponseEntity<List<ConsumerConfigEntity>> fetchActive() {
-        return ResponseEntity.ok(consumerConfigService.findActive());
+        var activeConsumers = consumerConfigService.findActive();
+        return ResponseEntity.ok(activeConsumers);
     }
 
     @GetMapping("/inactive")
     public ResponseEntity<List<ConsumerConfigEntity>> fetchInactive() {
-        return ResponseEntity.ok(consumerConfigService.findInactive());
+        var inactiveConsumers = consumerConfigService.findInactive();
+        return ResponseEntity.ok(inactiveConsumers);
     }
 
     @GetMapping("/{groupId}/{topic}/offsets")
@@ -42,20 +44,18 @@ public class KafkaConsumerController {
     }
 
     @PostMapping
-    public ResponseEntity<Void> start(@RequestBody ConsumerConfigEntity consumerConfigEntity) {
-        consumerConfigService.insert(consumerConfigEntity);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<ConsumerConfigEntity> create(@RequestBody ConsumerConfigEntity consumerConfigEntity) {
+        var consumer = consumerConfigService.insert(consumerConfigEntity);
+        return ResponseEntity.ok(consumer);
     }
 
     @PostMapping("/{id}/inactive")
-    public ResponseEntity<Void> markInactive(@PathVariable String id) {
-        consumerConfigService.markInactive(id);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<Boolean> markInactive(@PathVariable String id) {
+        return ResponseEntity.ok(consumerConfigService.markInactive(id));
     }
 
     @PostMapping("/{id}/active")
-    public ResponseEntity<Void> markActive(@PathVariable String id) {
-        consumerConfigService.markActive(id);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<Boolean> markActive(@PathVariable String id) {
+        return ResponseEntity.ok(consumerConfigService.markActive(id));
     }
 }
