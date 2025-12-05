@@ -1,5 +1,7 @@
 package com.samsepiol.library.kafka.consumer.config.api;
 
+import com.samsepiol.library.kafka.admin.offsets.OffsetMonitoringService;
+import com.samsepiol.library.kafka.admin.offsets.models.response.PartitionOffsetInfo;
 import com.samsepiol.library.kafka.consumer.config.service.ConsumerConfigService;
 import com.samsepiol.library.kafka.consumer.config.service.repo.models.ConsumerConfigEntity;
 import lombok.RequiredArgsConstructor;
@@ -13,13 +15,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/consumers/kafka")
 @RequiredArgsConstructor
 @ConditionalOnProperty("spring.kafka.bootstrap-servers")
-public class KafkaConsumerConfigController {
+public class KafkaConsumerController {
     private final ConsumerConfigService consumerConfigService;
+    private final OffsetMonitoringService offsetMonitoringService;
 
     @GetMapping("/active")
     public ResponseEntity<List<ConsumerConfigEntity>> fetchActive() {
@@ -29,6 +33,12 @@ public class KafkaConsumerConfigController {
     @GetMapping("/inactive")
     public ResponseEntity<List<ConsumerConfigEntity>> fetchInactive() {
         return ResponseEntity.ok(consumerConfigService.findInactive());
+    }
+
+    @GetMapping("/{groupId}/{topic}/offsets")
+    public ResponseEntity<Map<Integer, PartitionOffsetInfo>> fetchOffsets(@PathVariable String groupId,
+                                                                          @PathVariable String topic) {
+        return ResponseEntity.ok(offsetMonitoringService.getOffsets(topic, groupId));
     }
 
     @PostMapping
