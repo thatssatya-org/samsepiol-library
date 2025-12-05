@@ -14,3 +14,8 @@ spring:
 
 server:
   port: 6969
+
+temporal-config:
+  host: localhost
+  port: 7233
+  namespace: default

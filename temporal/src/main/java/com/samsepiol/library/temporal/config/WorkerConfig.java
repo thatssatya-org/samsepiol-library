@@ -1,63 +1,87 @@
 package com.samsepiol.library.temporal.config;
 
 
-import com.samsepiol.library.temporal.client.TemporalClient;
-import com.samsepiol.library.temporal.worker.Worker;
+import com.samsepiol.library.temporal.activity.TemporalActivity;
+import com.samsepiol.library.temporal.constants.Queues;
 import com.samsepiol.library.temporal.workflow.TemporalWorkflow;
+import io.temporal.client.WorkflowClient;
 import io.temporal.worker.WorkerFactory;
 import io.temporal.worker.WorkerOptions;
+import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Bean;
+import org.springframework.beans.factory.DisposableBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.type.filter.AssignableTypeFilter;
+import org.springframework.util.ClassUtils;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 @Configuration
+@RequiredArgsConstructor
+@ConditionalOnProperty("temporal-config.host")
 @Slf4j
-public class WorkerConfig {
+public class WorkerConfig implements DisposableBean {
     private static WorkerFactory factory = null;
 
-    @Bean
-    public Map<Class<? extends TemporalWorkflow>, Worker> workerMap(TemporalClient temporalClient, List<Worker> workers) {
-        factory(temporalClient, workers);
-        return workers.stream()
-                .flatMap(worker -> worker.getWorkflowImplementationTypes().stream().map(type -> Map.entry(type, worker)))
-                .collect(Collectors.toMap(
-                        workerEntry -> (Class<? extends TemporalWorkflow>)
-                                Arrays.stream(workerEntry.getKey().getInterfaces()).findFirst().orElseThrow(),
-                        Map.Entry::getValue));
+    private final WorkflowClient workflowClient;
+    private final List<TemporalActivity> activities;
+
+    @PostConstruct
+    private synchronized void init() {
+        if (Objects.isNull(factory)) {
+            factory = WorkerFactory.newInstance(workflowClient);
+        }
+        addWorkerToFactory(activities);
+        startFactory();
     }
 
-    public synchronized void startFactory() {
-        if (!factory.isStarted()) {
+    private void startFactory() {
+        if (Objects.nonNull(factory) && !factory.isStarted()) {
             factory.start();
             log.info("Temporal Worker Factory started!");
         }
     }
 
-    private synchronized void factory(TemporalClient temporalClient, List<Worker> workers) {
-        if (Objects.isNull(factory)) {
-            factory = temporalClient.getNewWorkerFactory();
+    private void addWorkerToFactory(List<TemporalActivity> activities) {
+        if (Objects.nonNull(factory)) {
+            var newWorker = factory.newWorker(Queues.WORKFLOWS, WorkerOptions.getDefaultInstance());
+            findClassesImplementing(TemporalWorkflow.class, "com.samsepiol.*").forEach(newWorker::registerWorkflowImplementationTypes);
+            activities.forEach(newWorker::registerActivitiesImplementations);
+
+            log.info("Worker added to factory");
         }
-        addWorkersToFactory(workers);
     }
 
+    public List<? extends Class<?>> findClassesImplementing(Class<?> targetInterface, String basePackage) {
+        var provider = new ClassPathScanningCandidateComponentProvider(false);
+        provider.addIncludeFilter(new AssignableTypeFilter(targetInterface));
+        var components = provider.findCandidateComponents(basePackage);
 
-    public void addWorkersToFactory(List<Worker> workers) {
-        workers.forEach(this::addWorkerToFactory);
+        return components.stream()
+                .map(component -> {
+                    try {
+                        return ClassUtils.forName(
+                                Objects.requireNonNull(component.getBeanClassName()),
+                                ClassUtils.getDefaultClassLoader()
+                        );
+                    } catch (ClassNotFoundException e) {
+                        log.info("Exception while workflow classes scan", e);
+                        return null;
+                    }
+                })
+                .filter(Objects::nonNull)
+                .toList();
+
     }
 
-    private void addWorkerToFactory(Worker worker) {
-        var newWorker = factory.newWorker(worker.getTaskQueue(), WorkerOptions.getDefaultInstance());
-
-        worker.getWorkflowImplementationTypes().forEach(newWorker::registerWorkflowImplementationTypes);
-        worker.getActivityImplementations().forEach(newWorker::registerActivitiesImplementations);
-
-        log.info("{} added to factory", worker.getClass().getName());
+    @Override
+    public void destroy() {
+        if (Objects.nonNull(factory) && !factory.isShutdown()) {
+            factory.shutdown();
+        }
     }
-
 }
