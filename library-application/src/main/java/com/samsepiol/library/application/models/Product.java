@@ -1,4 +1,4 @@
-package com.samsepiol.library.application.mongo.models;
+package com.samsepiol.library.application.models;
 
 import com.samsepiol.library.mongo.models.Entity;
 import lombok.AllArgsConstructor;

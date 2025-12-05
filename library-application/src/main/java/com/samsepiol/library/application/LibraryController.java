@@ -1,9 +1,11 @@
-package com.samsepiol.library.application.mongo;
+package com.samsepiol.library.application;
 
-import com.samsepiol.library.application.mongo.models.Product;
-import com.samsepiol.library.application.mongo.repo.ProductRepository;
+import com.samsepiol.library.application.models.Product;
+import com.samsepiol.library.application.repo.ProductRepository;
+import com.samsepiol.library.application.temporal.DummyWorkflow;
 import com.samsepiol.library.cache.Cache;
 import com.samsepiol.library.mongo.Repository;
+import io.temporal.client.WorkflowClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class LibraryController {
     private final ProductRepository productRepository;
     private final Repository repository;
+    private final WorkflowClient workflowClient;
 
     private final Cache<String, String> cache;
 
@@ -46,6 +49,13 @@ public class LibraryController {
     @GetMapping("/redis/health")
     public ResponseEntity<Boolean> redisHealth() {
         return ResponseEntity.ok(cache.isHealthy());
+    }
+
+    @PostMapping("/temporal/workflow")
+    public ResponseEntity<Void> startWorkflow() {
+        var workflow = DummyWorkflow.getInstance(workflowClient);
+        WorkflowClient.start(workflow::process);
+        return ResponseEntity.ok().build();
     }
 
 }

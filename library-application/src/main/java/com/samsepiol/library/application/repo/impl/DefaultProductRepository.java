@@ -1,8 +1,8 @@
-package com.samsepiol.library.application.mongo.repo.impl;
+package com.samsepiol.library.application.repo.impl;
 
 import com.mongodb.client.model.Updates;
-import com.samsepiol.library.application.mongo.models.Product;
-import com.samsepiol.library.application.mongo.repo.ProductRepository;
+import com.samsepiol.library.application.models.Product;
+import com.samsepiol.library.application.repo.ProductRepository;
 import com.samsepiol.library.mongo.Repository;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
