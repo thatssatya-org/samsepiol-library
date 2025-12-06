@@ -11,6 +11,8 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.time.Duration;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
@@ -30,9 +32,21 @@ public class RedisCache<V> implements DistributedCache<String, V> {
     }
 
     @Override
+    public List<V> get(@NonNull List<String> keys) {
+        //noinspection unchecked
+        return (List<V>) template.opsForValue().multiGet(keys);
+    }
+
+    @Override
     public @NonNull V put(@NonNull String key, @NonNull V value) {
         template.opsForValue().set(key, value);
         return value;
+    }
+
+    @Override
+    public @NonNull Map<String, V> put(@NonNull Map<String, V> values) {
+        template.opsForValue().multiSet(values);
+        return values;
     }
 
     @Override

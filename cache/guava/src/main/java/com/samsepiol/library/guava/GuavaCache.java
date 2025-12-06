@@ -6,6 +6,8 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
+import java.util.List;
+import java.util.Map;
 
 @Slf4j
 public class GuavaCache<K, V> implements LocalCache<K, V> {
@@ -28,9 +30,20 @@ public class GuavaCache<K, V> implements LocalCache<K, V> {
     }
 
     @Override
+    public List<V> get(@NonNull List<K> keys) {
+        return keys.stream().map(this::get).toList();
+    }
+
+    @Override
     public @NonNull V put(@NonNull K key, @NonNull V value) {
         cache.put(key, value);
         return value;
+    }
+
+    @Override
+    public @NonNull Map<K, V> put(@NonNull Map<K, V> values) {
+        cache.putAll(values);
+        return values;
     }
 
     @Override
