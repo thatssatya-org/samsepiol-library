@@ -15,7 +15,7 @@ COPY lock/pom.xml ./lock/
 COPY message-queue/message-queue-core/pom.xml ./message-queue/message-queue-core/
 COPY message-queue/kafka/pom.xml ./message-queue/kafka/
 COPY message-queue/pom.xml ./message-queue/
-COPY ai/pom.xml / ./ai/
+COPY ai/pom.xml ./ai/
 COPY library-application/pom.xml ./library-application/
 
 # Download dependencies
@@ -35,7 +35,7 @@ COPY lock ./lock
 COPY message-queue/message-queue-core ./message-queue/message-queue-core/
 COPY message-queue/kafka ./message-queue/kafka/
 COPY message-queue ./message-queue/
-COPY ai / ./ai/
+COPY ai ./ai/
 COPY library-application ./library-application
 
 # Build the project
