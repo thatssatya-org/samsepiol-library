@@ -7,12 +7,14 @@ import com.samsepiol.library.kafka.consumer.config.service.repo.models.ConsumerC
 import jakarta.annotation.PostConstruct;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @ConditionalOnProperty("spring.kafka.bootstrap-servers")
@@ -22,7 +24,11 @@ public class DefaultConsumerConfigService implements ConsumerConfigService {
 
     @PostConstruct
     public void init() {
-        consumerClient.init(findActive());
+        try {
+            consumerClient.init(findActive());
+        } catch (Exception exception) {
+            log.error("Consumers init failed", exception);
+        }
     }
 
     @Override
