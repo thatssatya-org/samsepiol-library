@@ -60,6 +60,12 @@ public interface Repository {
         return entity;
     }
 
+    default <T extends Entity> List<T> insert(String collectionName, List<T> entities, Class<T> clazz) {
+        entities.forEach(Entity::beforeInsert);
+        getCollection(collectionName, clazz).insertMany(entities);
+        return entities;
+    }
+
     default boolean updateById(String collectionName, String value, Bson updateQuery) {
         var query = Updates.combine(updateQuery, Updates.set(EntityConstants.UPDATED_AT, DateTimeUtils.currentEpochMillis()));
         var updateResult = getCollection(collectionName)
