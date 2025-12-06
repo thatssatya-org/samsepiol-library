@@ -31,3 +31,5 @@ build/
 
 ### VS Code ###
 .vscode/
+
+library-application/src/main/resources/*.env

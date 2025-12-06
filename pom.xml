@@ -29,6 +29,7 @@
         <module>message-queue</module>
         <module>message-queue/message-queue-core</module>
         <module>message-queue/kafka</module>
+        <module>ai</module>
     </modules>
 
 </project>
