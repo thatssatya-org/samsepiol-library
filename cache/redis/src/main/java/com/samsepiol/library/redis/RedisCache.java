@@ -2,7 +2,6 @@ package com.samsepiol.library.redis;
 
 import com.samsepiol.library.cache.distributed.DistributedCache;
 import com.samsepiol.library.redis.constants.BeanNames;
-import jakarta.annotation.PostConstruct;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,11 +22,6 @@ import java.util.concurrent.TimeUnit;
 public class RedisCache<V> implements DistributedCache<String, V> {
     private final RedisTemplate<String, Object> template;
     private static final String PONG = "PONG";
-
-    @PostConstruct
-    public void init() {
-        log.info("Redis Connection Health Check: {}", isHealthy());
-    }
 
     @Override
     public V get(@NonNull String key) {

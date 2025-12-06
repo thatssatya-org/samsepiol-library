@@ -12,6 +12,10 @@ COPY cache/cache-core/pom.xml ./cache/cache-core/
 COPY cache/guava/pom.xml ./cache/guava/
 COPY cache/redis/pom.xml ./cache/redis/
 COPY lock/pom.xml ./lock/
+COPY message-queue/message-queue-core/pom.xml ./message-queue/message-queue-core/
+COPY message-queue/kafka/pom.xml ./message-queue/kafka/
+COPY message-queue/pom.xml ./message-queue/
+COPY ai/pom.xml ./ai/
 COPY library-application/pom.xml ./library-application/
 
 # Download dependencies
@@ -28,6 +32,10 @@ COPY cache/cache-core ./cache/cache-core
 COPY cache/guava ./cache/guava
 COPY cache/redis ./cache/redis
 COPY lock ./lock
+COPY message-queue/message-queue-core ./message-queue/message-queue-core/
+COPY message-queue/kafka ./message-queue/kafka/
+COPY message-queue ./message-queue/
+COPY ai ./ai/
 COPY library-application ./library-application
 
 # Build the project

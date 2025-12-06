@@ -2,7 +2,9 @@ package com.samsepiol.library.temporal.config;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.temporal.client.WorkflowClient;
+import io.temporal.client.WorkflowClientOptions;
 import io.temporal.client.schedules.ScheduleClient;
+import io.temporal.client.schedules.ScheduleClientOptions;
 import io.temporal.serviceclient.WorkflowServiceStubs;
 import io.temporal.serviceclient.WorkflowServiceStubsOptions;
 import lombok.Data;
@@ -23,12 +25,16 @@ public class TemporalConnectionConfig {
 
     @Bean
     public WorkflowClient workflowClient(WorkflowServiceStubs serviceStubs) {
-        return WorkflowClient.newInstance(serviceStubs);
+        return WorkflowClient.newInstance(serviceStubs, WorkflowClientOptions.newBuilder()
+                .setNamespace(namespace)
+                .build());
     }
 
     @Bean
     public ScheduleClient scheduleClient(WorkflowServiceStubs serviceStubs) {
-        return ScheduleClient.newInstance(serviceStubs);
+        return ScheduleClient.newInstance(serviceStubs, ScheduleClientOptions.newBuilder()
+                .setNamespace(namespace)
+                .build());
     }
 
     @Bean

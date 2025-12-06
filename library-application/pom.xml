@@ -44,10 +44,37 @@
             <version>${project.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.samsepiol.library</groupId>
+            <artifactId>message-queue</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.samsepiol.library</groupId>
+            <artifactId>temporal</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.samsepiol.library</groupId>
+            <artifactId>ai</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
     </dependencies>
 
     <properties>
         <project.mainClass>com.samsepiol.library.application.LibraryApplication</project.mainClass>
     </properties>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>
