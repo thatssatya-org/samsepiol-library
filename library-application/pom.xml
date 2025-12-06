@@ -56,6 +56,12 @@
             <version>${project.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.samsepiol.library</groupId>
+            <artifactId>ai</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
     </dependencies>
 
     <properties>

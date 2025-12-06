@@ -3,19 +3,32 @@ spring:
     name: samsepiol-library
   data:
     mongodb:
-      host: localhost
+      host: ${mongo.host}
       port: 27017
       database: test
+      username: ${mongo.username}
+      password: ${mongo.password}
+      authentication-database: admin
     redis:
-      host: localhost
+      host: ${redis.host}
       port: 6379
   kafka:
     bootstrap-servers: localhost:9092
+  ai:
+    google:
+      genai:
+        api-key: ${gemini.api.key:}
+        chat:
+          options:
+            model: ${gemini.model:gemini-2.5-pro}
+    chat:
+      client:
+        enabled: true
 
 server:
   port: 6969
 
 temporal-config:
-  host: localhost
+  host: ${temporal.host}
   port: 7233
   namespace: default
