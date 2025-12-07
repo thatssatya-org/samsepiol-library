@@ -61,6 +61,13 @@ public interface Repository {
                 .into(new ArrayList<>());
     }
 
+    default <T extends Entity> List<T> findAllSorted(String collectionName, Bson query, Bson sort, Class<T> clazz) {
+        return getCollection(collectionName, clazz)
+                .find(query)
+                .sort(sort)
+                .into(new ArrayList<>());
+    }
+
     default <T extends Entity> T insert(String collectionName, T entity, Class<T> clazz) {
         entity.beforeInsert();
         getCollection(collectionName, clazz).insertOne(entity);
