@@ -60,6 +60,12 @@ public class GuavaCache<K, V> implements LocalCache<K, V> {
     }
 
     @Override
+    public boolean delete(@NonNull List<String> keys) {
+        cache.invalidateAll(keys);
+        return Boolean.TRUE;
+    }
+
+    @Override
     public boolean isHealthy() {
         try {
             cache.size();

@@ -24,6 +24,8 @@ public interface Cache<K, V> {
 
     boolean delete(@NonNull K key);
 
+    boolean delete(@NonNull List<String> keys);
+
     Type type();
 
     boolean isHealthy();

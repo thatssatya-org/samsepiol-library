@@ -40,6 +40,12 @@
 
         <dependency>
             <groupId>com.samsepiol.library</groupId>
+            <artifactId>lock</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.samsepiol.library</groupId>
             <artifactId>cache</artifactId>
             <version>${project.version}</version>
         </dependency>

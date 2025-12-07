@@ -51,8 +51,14 @@ public class RedisCache<V> implements DistributedCache<String, V> {
 
     @Override
     public boolean delete(@NonNull String key) {
-        var entity = template.opsForValue().getAndDelete(key);
-        return Objects.nonNull(entity);
+        template.delete(key);
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public boolean delete(@NonNull List<String> keys) {
+        template.delete(keys);
+        return Boolean.TRUE;
     }
 
     @Override
