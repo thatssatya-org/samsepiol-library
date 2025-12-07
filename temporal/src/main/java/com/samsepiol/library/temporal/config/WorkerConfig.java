@@ -48,7 +48,14 @@ public class WorkerConfig implements DisposableBean {
 
     private void addWorkerToFactory(List<TemporalActivity> activities) {
         if (Objects.nonNull(factory)) {
-            var newWorker = factory.newWorker(Queues.WORKFLOWS, WorkerOptions.getDefaultInstance());
+            var newWorker = factory.newWorker(Queues.WORKFLOWS, WorkerOptions.newBuilder()
+                    .setUsingVirtualThreads(true)
+                    .setMaxConcurrentWorkflowTaskPollers(2)
+                    .setMaxConcurrentActivityTaskPollers(2)
+                    .setMaxConcurrentActivityExecutionSize(2)
+                    .setMaxConcurrentWorkflowTaskExecutionSize(2)
+                    .build());
+
             findClassesImplementing(TemporalWorkflow.class, "com.samsepiol.*").forEach(newWorker::registerWorkflowImplementationTypes);
             activities.forEach(newWorker::registerActivitiesImplementations);
 
