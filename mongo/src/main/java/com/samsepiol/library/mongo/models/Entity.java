@@ -25,6 +25,14 @@ public abstract class Entity {
     private Long createdAt;
     private Long updatedAt;
 
+    public void beforeInsertOrUpdate() {
+        if (Objects.isNull(id)) {
+            beforeInsert();
+        } else {
+            beforeUpdate();
+        }
+    }
+
     public void beforeInsert() {
         if (Objects.isNull(createdAt)) {
             createdAt = updatedAt = DateTimeUtils.currentEpochMillis();
