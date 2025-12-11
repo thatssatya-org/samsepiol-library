@@ -33,3 +33,4 @@ build/
 .vscode/
 
 library-application/src/main/resources/*.env
+queries
