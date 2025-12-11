@@ -17,7 +17,7 @@ import java.util.Objects;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode
-@SuperBuilder(builderMethodName = "parentBuilder")
+@SuperBuilder(builderMethodName = "parentBuilder", toBuilder = true)
 @ToString
 public abstract class Entity {
     @BsonId
