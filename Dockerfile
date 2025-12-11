@@ -37,7 +37,7 @@ COPY message-queue/kafka ./message-queue/kafka/
 COPY message-queue ./message-queue/
 COPY ai ./ai/
 COPY library-application ./library-application
-COPY lombok.config ./lombok.config
+COPY lombok.config .
 
 # Build the project
 RUN --mount=type=cache,target=/root/.m2 \
