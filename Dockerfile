@@ -16,6 +16,7 @@ COPY message-queue/message-queue-core/pom.xml ./message-queue/message-queue-core
 COPY message-queue/kafka/pom.xml ./message-queue/kafka/
 COPY message-queue/pom.xml ./message-queue/
 COPY ai/pom.xml ./ai/
+COPY health/pom.xml ./health/
 COPY library-application/pom.xml ./library-application/
 
 # Download dependencies
@@ -36,6 +37,7 @@ COPY message-queue/message-queue-core ./message-queue/message-queue-core/
 COPY message-queue/kafka ./message-queue/kafka/
 COPY message-queue ./message-queue/
 COPY ai ./ai/
+COPY health ./health/
 COPY library-application ./library-application
 COPY lombok.config .
 
