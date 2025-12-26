@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.samsepiol.library</groupId>
         <artifactId>library-root</artifactId>
-        <version>0.0.2-LIBRARY-SNAPSHOT</version>
+        <version>0.0.3-LIBRARY-SNAPSHOT</version>
     </parent>
 
     <artifactId>health</artifactId>
