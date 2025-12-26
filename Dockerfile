@@ -29,10 +29,10 @@ RUN --mount=type=cache,target=/root/.m2 \
 # Copy the rest of the source code
 COPY http ./http
 COPY library-core ./library-core
+COPY repository ./repository/
 COPY repository/repository-models ./repository/repository-models/
 COPY repository/mysql ./repository/mysql/
 COPY repository/mongo ./repository/mongo/
-COPY repository ./repository/
 COPY temporal ./temporal
 COPY cache ./cache
 COPY cache/cache-core ./cache/cache-core
