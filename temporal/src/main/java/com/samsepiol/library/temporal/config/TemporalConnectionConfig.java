@@ -13,6 +13,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.time.Duration;
+import java.util.concurrent.TimeUnit;
+
 @Configuration
 @ConfigurationProperties(prefix = "temporal-config")
 @ConditionalOnProperty("temporal-config.host")
@@ -49,6 +52,18 @@ public class TemporalConnectionConfig {
     private WorkflowServiceStubsOptions buildWorkflowServiceStubsOptions() {
         return WorkflowServiceStubsOptions.newBuilder()
                 .setTarget(getTarget())
+                .setEnableKeepAlive(Boolean.TRUE)
+                .setKeepAliveTime(Duration.ofSeconds(30))
+                .setKeepAliveTimeout(Duration.ofSeconds(10))
+                .setChannelInitializer(channelBuilder -> {
+                    if (channelBuilder != null) {
+                        channelBuilder
+                                .keepAliveTime(30, TimeUnit.SECONDS)
+                                .keepAliveTimeout(10, TimeUnit.SECONDS);
+                        // Note: Netty's proxy connect timeout is often separate,
+                        // but ensuring the gRPC channel is patient helps.
+                    }
+                })
                 .build();
     }
 }
