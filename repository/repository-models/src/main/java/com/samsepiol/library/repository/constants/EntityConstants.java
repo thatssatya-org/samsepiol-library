@@ -1,4 +1,4 @@
-package com.samsepiol.library.mongo.constants;
+package com.samsepiol.library.repository.constants;
 
 import lombok.experimental.UtilityClass;
 

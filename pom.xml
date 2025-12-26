@@ -20,7 +20,10 @@
         <module>http</module>
         <module>temporal</module>
         <module>library-application</module>
-        <module>mongo</module>
+        <module>repository</module>
+        <module>repository/repository-models</module>
+        <module>repository/mysql</module>
+        <module>repository/mongo</module>
         <module>cache</module>
         <module>cache/cache-core</module>
         <module>cache/guava</module>

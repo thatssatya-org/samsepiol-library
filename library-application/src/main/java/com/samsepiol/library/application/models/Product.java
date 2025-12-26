@@ -2,7 +2,7 @@ package com.samsepiol.library.application.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.samsepiol.library.mongo.models.Entity;
+import com.samsepiol.library.repository.models.Entity;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;

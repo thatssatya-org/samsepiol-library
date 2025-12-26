@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @Slf4j
@@ -18,6 +19,9 @@ public class SerializationUtil {
 
     public static String convertToString(Object object) throws SerializationException {
         try {
+            if (Objects.isNull(object)) {
+                return null;
+            }
             return object instanceof String string ? string : objectMapper.writeValueAsString(object);
         } catch (JsonProcessingException e) {
             log.error(e.getMessage());
@@ -35,6 +39,9 @@ public class SerializationUtil {
 
     public static <T> T convertToEntity(Object object, Class<T> cls) throws SerializationException {
         try {
+            if (Objects.isNull(object)) {
+                return null;
+            }
             return objectMapper.readValue(convertToString(object), cls);
         } catch (JsonProcessingException | SerializationException e) {
             log.error(e.getMessage());

@@ -5,7 +5,9 @@ COPY pom.xml .
 
 COPY http/pom.xml ./http/
 COPY library-core/pom.xml ./library-core/
-COPY mongo/pom.xml ./mongo/
+COPY repository/repository-models/pom.xml ./repository/repository-models/
+COPY repository/mysql/pom.xml ./repository/mysql/
+COPY repository/mongo/pom.xml ./repository/mongo/
 COPY temporal/pom.xml ./temporal/
 COPY cache/pom.xml ./cache/
 COPY cache/cache-core/pom.xml ./cache/cache-core/
@@ -26,7 +28,9 @@ RUN --mount=type=cache,target=/root/.m2 \
 # Copy the rest of the source code
 COPY http ./http
 COPY library-core ./library-core
-COPY mongo ./mongo
+COPY repository/repository-models ./repository/repository-models/
+COPY repository/mysql ./repository/mysql/
+COPY repository/mongo ./repository/mongo/
 COPY temporal ./temporal
 COPY cache ./cache
 COPY cache/cache-core ./cache/cache-core
