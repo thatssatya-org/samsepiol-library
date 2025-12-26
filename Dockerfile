@@ -5,6 +5,7 @@ COPY pom.xml .
 
 COPY http/pom.xml ./http/
 COPY library-core/pom.xml ./library-core/
+COPY repository/pom.xml ./repository/
 COPY repository/repository-models/pom.xml ./repository/repository-models/
 COPY repository/mysql/pom.xml ./repository/mysql/
 COPY repository/mongo/pom.xml ./repository/mongo/
@@ -31,6 +32,7 @@ COPY library-core ./library-core
 COPY repository/repository-models ./repository/repository-models/
 COPY repository/mysql ./repository/mysql/
 COPY repository/mongo ./repository/mongo/
+COPY repository ./repository/
 COPY temporal ./temporal
 COPY cache ./cache
 COPY cache/cache-core ./cache/cache-core
