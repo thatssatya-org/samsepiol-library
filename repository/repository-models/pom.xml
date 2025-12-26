@@ -7,20 +7,21 @@
         <groupId>com.samsepiol.library</groupId>
         <artifactId>library-root</artifactId>
         <version>0.0.2-LIBRARY-SNAPSHOT</version>
+        <relativePath>../../pom.xml</relativePath>
     </parent>
 
-    <artifactId>mongo</artifactId>
+    <artifactId>repository-models</artifactId>
 
     <dependencies>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-mongodb</artifactId>
-        </dependency>
         <dependency>
             <groupId>com.samsepiol.library</groupId>
             <artifactId>library-core</artifactId>
             <version>${project.version}</version>
         </dependency>
-    </dependencies>
 
+        <dependency>
+            <groupId>org.mongodb</groupId>
+            <artifactId>bson</artifactId>
+        </dependency>
+    </dependencies>
 </project>

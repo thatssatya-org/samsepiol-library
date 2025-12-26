@@ -3,7 +3,7 @@ package com.samsepiol.library.kafka.consumer.config.service.repo.models;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.samsepiol.library.kafka.consumer.config.service.repo.models.enums.ConsumerStatus;
-import com.samsepiol.library.mongo.models.Entity;
+import com.samsepiol.library.repository.models.Entity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NonNull;
