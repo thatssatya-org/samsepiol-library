@@ -19,6 +19,8 @@ import org.springframework.util.ClassUtils;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
 
 @Configuration
 @RequiredArgsConstructor
@@ -36,13 +38,22 @@ public class WorkerConfig implements DisposableBean {
             factory = WorkerFactory.newInstance(workflowClient);
         }
         addWorkerToFactory(activities);
-        startFactory();
+        startFactoryAsync();
+    }
+
+    private void startFactoryAsync() {
+        CompletableFuture.runAsync(this::startFactory, Executors.newVirtualThreadPerTaskExecutor());
     }
 
     private void startFactory() {
-        if (Objects.nonNull(factory) && !factory.isStarted()) {
-            factory.start();
-            log.info("Temporal Worker Factory started!");
+        try {
+            if (Objects.nonNull(factory) && !factory.isStarted()) {
+                factory.start();
+                log.info("Temporal Worker Factory started!");
+            }
+        } catch (Exception e) {
+            log.error("Temporal Worker Factory startup failed!", e);
+            throw e;
         }
     }
 
