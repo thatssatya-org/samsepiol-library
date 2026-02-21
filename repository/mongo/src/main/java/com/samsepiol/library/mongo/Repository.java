@@ -84,16 +84,16 @@ public interface Repository {
     }
 
     default boolean updateById(String collectionName, String value, Bson updateQuery) {
-        var query = Updates.combine(updateQuery, Updates.set(EntityConstants.UPDATED_AT, DateTimeUtils.currentEpochMillis()));
-        var updateResult = getCollection(collectionName)
-                .updateOne(Filters.eq(EntityConstants.ID, value), query);
-        return updateResult.getMatchedCount() > 0;
+        return update(collectionName, EntityConstants.ID, value, updateQuery);
     }
 
     default boolean update(String collectionName, String id, String value, Bson updateQuery) {
+        return update(collectionName, Filters.eq(id, value), updateQuery);
+    }
 
+    default boolean update(String collectionName, Bson filterQuery, Bson updateQuery) {
         var query = Updates.combine(updateQuery, Updates.set(EntityConstants.UPDATED_AT, DateTimeUtils.currentEpochMillis()));
-        var updateResult = getCollection(collectionName).updateMany(Filters.eq(id, value), query);
+        var updateResult = getCollection(collectionName).updateMany(filterQuery, query);
         return updateResult.getMatchedCount() > 0;
     }
 
