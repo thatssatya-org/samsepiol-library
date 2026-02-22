@@ -5,13 +5,13 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.codecs.configuration.CodecRegistry;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
 @Slf4j
 @org.springframework.stereotype.Repository
-@ConditionalOnProperty("spring.data.mongodb.host")
+@ConditionalOnExpression("!'${spring.data.mongodb.host:}'.isBlank()")
 @Primary
 @RequiredArgsConstructor
 public class DefaultRepository implements Repository {

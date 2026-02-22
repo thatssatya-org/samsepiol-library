@@ -1,16 +1,16 @@
 package com.samsepiol.library.kafka.consumer.client.impl;
 
-import com.samsepiol.library.kafka.consumer.message.listener.DynamicMessageListener;
 import com.samsepiol.library.kafka.consumer.client.MessageConsumerClient;
 import com.samsepiol.library.kafka.consumer.config.service.repo.models.ConsumerConfigEntity;
 import com.samsepiol.library.kafka.consumer.config.service.repo.models.enums.ConsumerStatus;
+import com.samsepiol.library.kafka.consumer.message.listener.DynamicMessageListener;
 import com.samsepiol.message.queue.core.MessageHandler;
 import com.samsepiol.message.queue.core.models.MessageHandlerType;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.DisposableBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
 import org.springframework.kafka.listener.ContainerProperties;
@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@ConditionalOnProperty("spring.kafka.bootstrap-servers")
+@ConditionalOnExpression("!'${spring.kafka.bootstrap-servers:}'.isBlank()")
 public class DefaultMessageConsumerClient implements MessageConsumerClient, DisposableBean {
     private final ConsumerFactory<String, String> consumerFactory;
     private final Map<MessageHandlerType, MessageHandler> messageHandlers;

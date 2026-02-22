@@ -5,7 +5,7 @@ import com.samsepiol.library.redis.constants.BeanNames;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit;
 @Primary
 @Repository(BeanNames.REDIS_CACHE)
 @RequiredArgsConstructor
-@ConditionalOnProperty("spring.data.redis.host")
+@ConditionalOnExpression("!'${spring.data.redis.host:}'.isBlank()")
 public class RedisCache<V> implements DistributedCache<String, V> {
     private final RedisTemplate<String, Object> template;
     private static final String PONG = "PONG";

@@ -6,11 +6,11 @@ import com.samsepiol.library.mysql.Repository;
 import com.samsepiol.library.mysql.config.MySqlRepositoryConfiguration;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 
 @org.springframework.stereotype.Repository
 @RequiredArgsConstructor
-@ConditionalOnProperty("mysql-config.host")
+@ConditionalOnExpression("!'${mysql-config.host:}'.isBlank()")
 public class MySqlRepository implements Repository {
     private final Client client;
     private final MySqlRepositoryConfiguration configuration;

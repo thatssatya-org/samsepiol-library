@@ -8,14 +8,14 @@ import com.samsepiol.library.kafka.consumer.config.service.repo.models.enums.Con
 import com.samsepiol.library.mongo.Repository;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 
 import java.util.List;
 import java.util.Optional;
 
 @org.springframework.stereotype.Repository
 @RequiredArgsConstructor
-@ConditionalOnProperty("spring.kafka.bootstrap-servers")
+@ConditionalOnExpression("!'${spring.kafka.bootstrap-servers:}'.isBlank()")
 public class MongoConsumerConfigRepository implements ConsumerConfigRepository {
     private static final String COLLECTION_NAME = "kafka-message-consumers";
     private final Repository repository;

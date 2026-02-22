@@ -8,7 +8,7 @@ import io.temporal.client.schedules.ScheduleClientOptions;
 import io.temporal.serviceclient.WorkflowServiceStubs;
 import io.temporal.serviceclient.WorkflowServiceStubsOptions;
 import lombok.Data;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit;
 
 @Configuration
 @ConfigurationProperties(prefix = "temporal-config")
-@ConditionalOnProperty("temporal-config.host")
+@ConditionalOnExpression("!'${temporal-config.host:}'.isBlank()")
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Data
 public class TemporalConnectionConfig {

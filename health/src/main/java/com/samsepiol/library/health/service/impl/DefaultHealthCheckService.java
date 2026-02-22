@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
 
 @Service
 @RequiredArgsConstructor
@@ -16,7 +18,7 @@ public class DefaultHealthCheckService implements HealthCheckService {
 
     @PostConstruct
     public void init() {
-        isHealthy();
+        CompletableFuture.runAsync(this::isHealthy, Executors.newVirtualThreadPerTaskExecutor());
     }
 
     @Override

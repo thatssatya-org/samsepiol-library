@@ -7,14 +7,14 @@ import com.samsepiol.library.redis.constants.BeanNames;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 
 import java.util.function.Supplier;
 
 @Service
 @RequiredArgsConstructor
-@ConditionalOnProperty("spring.data.redis.host")
+@ConditionalOnExpression("!'${spring.data.redis.host:}'.isBlank()")
 public class RedisHealthCheck implements DependencyHealthCheck {
     @Qualifier(BeanNames.REDIS_CACHE)
     private final Cache<String, String> redisCache;

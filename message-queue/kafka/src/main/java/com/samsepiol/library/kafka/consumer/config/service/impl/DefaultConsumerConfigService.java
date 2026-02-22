@@ -8,27 +8,35 @@ import jakarta.annotation.PostConstruct;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@ConditionalOnProperty("spring.kafka.bootstrap-servers")
+@ConditionalOnExpression("!'${spring.kafka.bootstrap-servers:}'.isBlank()")
 public class DefaultConsumerConfigService implements ConsumerConfigService {
     private final ConsumerConfigRepository repository;
     private final MessageConsumerClient consumerClient;
 
     @PostConstruct
     public void init() {
-        try {
-            consumerClient.init(findActive());
-        } catch (Exception exception) {
-            log.error("Consumers init failed", exception);
-        }
+        initAsync();
+    }
+
+    private void initAsync() {
+        CompletableFuture.runAsync(() -> {
+            try {
+                consumerClient.init(findActive());
+            } catch (Exception exception) {
+                log.error("Consumers init failed", exception);
+            }
+        }, Executors.newVirtualThreadPerTaskExecutor());
     }
 
     @Override

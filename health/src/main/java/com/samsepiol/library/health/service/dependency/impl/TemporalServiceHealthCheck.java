@@ -5,13 +5,13 @@ import com.samsepiol.library.health.service.dependency.models.enums.DependencyTy
 import com.samsepiol.library.temporal.TemporalService;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 
 import java.util.function.Supplier;
 
 @Service
-@ConditionalOnProperty("temporal-config.host")
+@ConditionalOnExpression("!'${temporal-config.host:}'.isBlank()")
 @RequiredArgsConstructor
 public class TemporalServiceHealthCheck implements DependencyHealthCheck {
     private final TemporalService service;

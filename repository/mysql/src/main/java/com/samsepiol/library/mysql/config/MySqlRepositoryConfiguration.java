@@ -3,7 +3,7 @@ package com.samsepiol.library.mysql.config;
 import com.mysql.cj.xdevapi.Client;
 import com.mysql.cj.xdevapi.ClientFactory;
 import lombok.Data;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,7 +14,7 @@ import java.nio.charset.StandardCharsets;
 @Data
 @Configuration
 @ConfigurationProperties(prefix = "mysql-config")
-@ConditionalOnProperty("mysql-config.host")
+@ConditionalOnExpression("!'${mysql-config.host:}'.isBlank()")
 public class MySqlRepositoryConfiguration {
     private String userName;
     private String password;

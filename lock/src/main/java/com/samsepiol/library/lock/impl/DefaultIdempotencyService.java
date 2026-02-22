@@ -4,7 +4,7 @@ import com.samsepiol.library.core.util.IdentityUtils;
 import com.samsepiol.library.lock.IdempotencyService;
 import com.samsepiol.library.lock.exception.ParallelLockException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
@@ -15,7 +15,7 @@ import java.util.function.Supplier;
 
 @Service
 @RequiredArgsConstructor
-@ConditionalOnProperty("spring.data.redis.host")
+@ConditionalOnExpression("!'${spring.data.redis.host:}'.isBlank()")
 public class DefaultIdempotencyService implements IdempotencyService {
     private static final String LOCK_PREFIX = "lock:";
     private static final Duration DEFAULT_LOCK_TTL = Duration.ofHours(1);

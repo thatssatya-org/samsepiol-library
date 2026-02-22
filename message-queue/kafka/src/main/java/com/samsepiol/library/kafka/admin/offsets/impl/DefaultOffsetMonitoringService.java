@@ -52,7 +52,7 @@ public class DefaultOffsetMonitoringService implements OffsetMonitoringService {
 
         } catch (InterruptedException | ExecutionException e) {
             Thread.currentThread().interrupt();
-            throw new RuntimeException("Failed to fetch offsets for group " + groupId, e);
+            throw new RuntimeException(String.format("Failed to fetch offsets for group %s", groupId), e);
         }
     }
 

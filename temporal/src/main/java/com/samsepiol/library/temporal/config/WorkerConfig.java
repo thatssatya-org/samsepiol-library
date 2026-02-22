@@ -11,7 +11,7 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.DisposableBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.type.filter.AssignableTypeFilter;
@@ -24,7 +24,7 @@ import java.util.concurrent.Executors;
 
 @Configuration
 @RequiredArgsConstructor
-@ConditionalOnProperty("temporal-config.host")
+@ConditionalOnExpression("!'${temporal-config.host:}'.isBlank()")
 @Slf4j
 public class WorkerConfig implements DisposableBean {
     private static WorkerFactory factory = null;

@@ -5,7 +5,7 @@ import com.samsepiol.library.kafka.admin.offsets.models.response.PartitionOffset
 import com.samsepiol.library.kafka.consumer.config.service.ConsumerConfigService;
 import com.samsepiol.library.kafka.consumer.config.service.repo.models.ConsumerConfigEntity;
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,7 +20,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/consumers/kafka")
 @RequiredArgsConstructor
-@ConditionalOnProperty("spring.kafka.bootstrap-servers")
+@ConditionalOnExpression("!'${spring.kafka.bootstrap-servers:}'.isBlank()")
 public class KafkaConsumerController {
     private final ConsumerConfigService consumerConfigService;
     private final OffsetMonitoringService offsetMonitoringService;
