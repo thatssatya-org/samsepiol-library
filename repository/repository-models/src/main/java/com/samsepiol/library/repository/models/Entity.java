@@ -1,6 +1,7 @@
 package com.samsepiol.library.repository.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.samsepiol.library.core.util.DateTimeUtils;
 import com.samsepiol.library.core.util.IdentityUtils;
 import com.samsepiol.library.repository.constants.EntityConstants;
@@ -21,6 +22,7 @@ import java.util.Objects;
 @EqualsAndHashCode
 @SuperBuilder(builderMethodName = "parentBuilder", toBuilder = true)
 @ToString
+@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "@class")
 public abstract class Entity {
     @BsonId
     @JsonProperty(EntityConstants.ID)
