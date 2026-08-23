@@ -1,10 +1,10 @@
 package com.samsepiol.library.http.response;
 
+import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
@@ -13,20 +13,17 @@ import java.util.Optional;
  * without re-reading the underlying HTTP entity.
  */
 @Value
-public class HttpResponseEnvelope {
-    int statusCode;
+@Builder
+public class HttpResponseEnvelope<T> {
+    @NonNull Integer statusCode;
     @NonNull Map<String, List<String>> headers;
-    @NonNull String body;
-
-    public HttpResponseEnvelope(int statusCode, @NonNull Map<String, List<String>> headers, @NonNull String body) {
-        this.statusCode = statusCode;
-        this.headers = headers.entrySet().stream().collect(java.util.stream.Collectors.toUnmodifiableMap(
-                entry -> entry.getKey().toLowerCase(Locale.ROOT), entry -> List.copyOf(entry.getValue())));
-        this.body = body;
-    }
+    T body;
 
     public @NonNull Optional<String> firstHeader(@NonNull String name) {
-        return headers.getOrDefault(name.toLowerCase(Locale.ROOT), List.of()).stream().findFirst();
+        return headers.entrySet().stream()
+                .filter(entry -> entry.getKey().equalsIgnoreCase(name))
+                .flatMap(entry -> entry.getValue().stream())
+                .findFirst();
     }
 
     public boolean isSuccessful() {

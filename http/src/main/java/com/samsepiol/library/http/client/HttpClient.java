@@ -14,8 +14,8 @@ public interface HttpClient {
 
     @NonNull HttpResponseStatus execute(ApiRequest request) throws LibraryException;
 
-    /** Returns a single-consumption bounded response including status and headers for conditional requests. */
-    @NonNull HttpResponseEnvelope executeWithResponse(ApiRequest request) throws LibraryException;
+    /** Returns a single-consumption bounded, deserialized response including status and headers for conditional requests. */
+    <T> @NonNull HttpResponseEnvelope<T> executeWithResponse(ApiRequest request, Class<T> responseCls) throws LibraryException;
 
     <T> CompletableFuture<T> executeAsync(ApiRequest request, Class<T> responseCls) throws LibraryException;
 }

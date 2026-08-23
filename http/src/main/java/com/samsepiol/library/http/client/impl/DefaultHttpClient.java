@@ -5,6 +5,7 @@ import com.samsepiol.library.core.exception.SerializationException;
 import com.samsepiol.library.http.client.HttpClient;
 import com.samsepiol.library.http.config.HttpConfig;
 import com.samsepiol.library.http.constants.AsyncExecutorPool;
+import com.samsepiol.library.http.exception.HttpClientException;
 import com.samsepiol.library.http.request.ApiRequest;
 import com.samsepiol.library.http.response.HttpResponseStatus;
 import com.samsepiol.library.http.response.HttpResponseEnvelope;
@@ -33,7 +34,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletableFuture;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -77,14 +78,21 @@ public class DefaultHttpClient implements HttpClient, Closeable {
 
     @Override
     public @NonNull HttpResponseStatus execute(ApiRequest request) throws LibraryException {
-        return executeAsyncInternal(request, httpResponse -> {
-            return new HttpResponseStatus(httpResponse.getStatusCode());
-        }).join();
+        return executeAsyncInternal(request, httpResponse -> HttpResponseStatus.builder()
+                .statusCode(httpResponse.getStatusCode())
+                .build()).join();
     }
 
     @Override
-    public @NonNull HttpResponseEnvelope executeWithResponse(ApiRequest request) throws LibraryException {
-        return executeAsyncInternal(request, response -> response).join();
+    public <R> @NonNull HttpResponseEnvelope<R> executeWithResponse(ApiRequest request, Class<R> responseCls)
+            throws LibraryException {
+        return executeAsyncInternal(request, response -> HttpResponseEnvelope.<R>builder()
+                .statusCode(response.getStatusCode())
+                .headers(response.getHeaders())
+                .body(response.isSuccessful() && !response.getBody().isBlank()
+                        ? deserializedResponse(responseCls, response.getBody())
+                        : null)
+                .build()).join();
     }
 
     private <R> CompletableFuture<R> executeAsyncInternal(ApiRequest request, Class<R> responseCls) throws SerializationException {
@@ -130,7 +138,7 @@ public class DefaultHttpClient implements HttpClient, Closeable {
             return new HttpGet(URI.create(buildUrl(request)));
 
         }
-        throw new UnsupportedOperationException("Request method not supported");
+        throw HttpClientException.builder().build();
     }
 
     private static <R> FutureCallback<HttpResponse> getFutureCallback(ResponseMapper<R> responseMapper,
@@ -145,20 +153,20 @@ public class DefaultHttpClient implements HttpClient, Closeable {
                     logResponseDiagnostics(apiConfig, httpRequest, response);
                     futureResponse.complete(responseMapper.map(response));
                 } catch (IOException | RuntimeException exception) {
-                    futureResponse.completeExceptionally(exception);
+                    futureResponse.completeExceptionally(HttpClientException.builder().build());
                 }
             }
 
             @Override
             public void failed(Exception exception) {
                 log.error("Http call failed for: {}", httpRequest.getURI(), exception);
-                futureResponse.completeExceptionally(exception);
+                futureResponse.completeExceptionally(HttpClientException.builder().build());
             }
 
             @Override
             public void cancelled() {
                 log.error("Http call cancelled for: {}", httpRequest.getURI());
-                futureResponse.completeExceptionally(new RuntimeException("Http operation cancelled"));
+                futureResponse.completeExceptionally(HttpClientException.builder().build());
             }
         };
     }
@@ -168,7 +176,7 @@ public class DefaultHttpClient implements HttpClient, Closeable {
             if (response.isSuccessful() && !response.getBody().isBlank()) {
                 return deserializedResponse(responseCls, response.getBody());
             }
-            throw new RuntimeException("Exception occurred!");
+            throw HttpClientException.builder().build();
         };
     }
 
@@ -211,25 +219,25 @@ public class DefaultHttpClient implements HttpClient, Closeable {
         return httpConfig.getServiceConfig(request.getService()).getApiConfig(request.getApi());
     }
 
-    private static HttpResponseEnvelope toResponseEnvelope(HttpResponse response,
-                                                            HttpConfig.ServiceConfig.ApiConfig apiConfig) throws IOException {
+    private static HttpResponseEnvelope<String> toResponseEnvelope(HttpResponse response,
+                                                                    HttpConfig.ServiceConfig.ApiConfig apiConfig) throws IOException {
         var headers = new LinkedHashMap<String, List<String>>();
         for (Header header : response.getAllHeaders()) {
-            headers.merge(header.getName(), List.of(header.getValue()), (left, right) -> {
-                var values = new java.util.ArrayList<>(left);
-                values.addAll(right);
-                return List.copyOf(values);
-            });
+            headers.computeIfAbsent(header.getName(), ignored -> new ArrayList<>()).add(header.getValue());
         }
         var body = response.getEntity() == null ? "" : readBoundedBody(response.getEntity().getContent(),
                 apiConfig.getMaxResponseBodyBytes());
-        return new HttpResponseEnvelope(response.getStatusLine().getStatusCode(), headers, body);
+        return HttpResponseEnvelope.<String>builder()
+                .statusCode(response.getStatusLine().getStatusCode())
+                .headers(headers)
+                .body(body)
+                .build();
     }
 
     private static String readBoundedBody(InputStream stream, Integer configuredMaxBytes) throws IOException {
         var maxBytes = configuredMaxBytes == null ? 262_144 : configuredMaxBytes;
         if (maxBytes <= 0) {
-            throw new IllegalArgumentException("maxResponseBodyBytes must be positive");
+            throw HttpClientException.builder().build();
         }
         var buffer = new java.io.ByteArrayOutputStream(Math.min(maxBytes, 8_192));
         var chunk = new byte[Math.min(maxBytes + 1, 8_192)];
@@ -241,8 +249,6 @@ public class DefaultHttpClient implements HttpClient, Closeable {
                 }
                 buffer.write(chunk, 0, read);
             }
-        } finally {
-            Arrays.fill(chunk, (byte) 0);
         }
         return buffer.toString(StandardCharsets.UTF_8);
     }
@@ -256,7 +262,7 @@ public class DefaultHttpClient implements HttpClient, Closeable {
     }
 
     private static void logResponseDiagnostics(HttpConfig.ServiceConfig.ApiConfig apiConfig, HttpUriRequest request,
-                                               HttpResponseEnvelope response) {
+                                               HttpResponseEnvelope<String> response) {
         if (apiConfig.isResponseLoggingEnabled()) {
             log.info("HTTP response method={} status={} headers={} body={}", request.getMethod(),
                     response.getStatusCode(), safeHeaders(response.getHeaders()),
@@ -268,11 +274,7 @@ public class DefaultHttpClient implements HttpClient, Closeable {
         var result = new LinkedHashMap<String, List<String>>();
         for (Header header : headers) {
             if (!SENSITIVE_HEADERS.contains(header.getName().toLowerCase(Locale.ROOT))) {
-                result.merge(header.getName(), List.of(header.getValue()), (left, right) -> {
-                    var values = new java.util.ArrayList<>(left);
-                    values.addAll(right);
-                    return List.copyOf(values);
-                });
+                result.computeIfAbsent(header.getName(), ignored -> new ArrayList<>()).add(header.getValue());
             }
         }
         return result;
@@ -298,7 +300,7 @@ public class DefaultHttpClient implements HttpClient, Closeable {
 
     @FunctionalInterface
     private interface ResponseMapper<R> {
-        R map(HttpResponseEnvelope httpResponse) throws IOException, SerializationException;
+        R map(HttpResponseEnvelope<String> httpResponse) throws IOException, SerializationException;
     }
 
 //    private HttpRequest buildHttpRequest(ApiRequest request) {
