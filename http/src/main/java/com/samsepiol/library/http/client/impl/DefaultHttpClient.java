@@ -6,9 +6,12 @@ import com.samsepiol.library.http.client.HttpClient;
 import com.samsepiol.library.http.config.HttpConfig;
 import com.samsepiol.library.http.constants.AsyncExecutorPool;
 import com.samsepiol.library.http.request.ApiRequest;
+import com.samsepiol.library.http.response.HttpResponseStatus;
 import com.samsepiol.library.core.util.SerializationUtil;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
@@ -26,18 +29,24 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 @Component
 @Slf4j
 public class DefaultHttpClient implements HttpClient, Closeable {
-    private static final CloseableHttpAsyncClient ASYNC_CLIENT = HttpAsyncClients.createDefault();
     private final HttpConfig httpConfig;
+    private final CloseableHttpAsyncClient asyncClient;
 
     public DefaultHttpClient(HttpConfig httpConfig) {
         this.httpConfig = httpConfig;
-        ASYNC_CLIENT.start();
+        this.asyncClient = HttpAsyncClients.custom()
+                .setDefaultRequestConfig(RequestConfig.custom()
+                        .setConnectTimeout(httpConfig.getConnectTimeoutMs())
+                        .setConnectionRequestTimeout(httpConfig.getConnectionRequestTimeoutMs())
+                        .setSocketTimeout(httpConfig.getSocketTimeoutMs())
+                        .build())
+                .build();
+        asyncClient.start();
     }
 
     @Override
@@ -51,18 +60,45 @@ public class DefaultHttpClient implements HttpClient, Closeable {
         return executeAsyncInternal(request, responseCls).join();
     }
 
+    @Override
+    public @NonNull HttpResponseStatus execute(ApiRequest request) throws LibraryException {
+        return executeAsyncInternal(request, httpResponse -> {
+            EntityUtils.consumeQuietly(httpResponse.getEntity());
+            return new HttpResponseStatus(httpResponse.getStatusLine().getStatusCode());
+        }).join();
+    }
+
     private <R> CompletableFuture<R> executeAsyncInternal(ApiRequest request, Class<R> responseCls) throws SerializationException {
+        return executeAsyncInternal(request, responseMapper(responseCls));
+    }
+
+    private <R> CompletableFuture<R> executeAsyncInternal(ApiRequest request,
+                                                          ResponseMapper<R> responseMapper) throws SerializationException {
         var futureResponse = new CompletableFuture<R>();
         var httpRequest = buildHttpUriRequest(request);
         log.info("Executing {} request to : {}", httpRequest.getMethod(), httpRequest.getURI());
-        ASYNC_CLIENT.execute(httpRequest, getFutureCallback(responseCls, futureResponse, httpRequest));
+        asyncClient.execute(httpRequest, getFutureCallback(responseMapper, futureResponse, httpRequest));
         return futureResponse;
     }
 
     private HttpUriRequest buildHttpUriRequest(ApiRequest request) throws SerializationException {
         var httpRequest =   getHttpRequestBase(request);
+        configureTimeouts(request, httpRequest);
         request.getHeaders().forEach(httpRequest::setHeader);
         return httpRequest;
+    }
+
+    private void configureTimeouts(ApiRequest request, HttpRequestBase httpRequest) {
+        var apiConfig = httpConfig.getServiceConfig(request.getService()).getApiConfig(request.getApi());
+        httpRequest.setConfig(RequestConfig.custom()
+                .setConnectTimeout(apiConfig.getConnectionTimeoutMs() == null
+                        ? httpConfig.getConnectTimeoutMs()
+                        : apiConfig.getConnectionTimeoutMs())
+                .setConnectionRequestTimeout(httpConfig.getConnectionRequestTimeoutMs())
+                .setSocketTimeout(apiConfig.getReadTimeoutMs() == null
+                        ? httpConfig.getSocketTimeoutMs()
+                        : apiConfig.getReadTimeoutMs())
+                .build());
     }
 
     private HttpRequestBase getHttpRequestBase(ApiRequest request) throws SerializationException {
@@ -77,7 +113,7 @@ public class DefaultHttpClient implements HttpClient, Closeable {
         throw new UnsupportedOperationException("Request method not supported");
     }
 
-    private static <R> FutureCallback<HttpResponse> getFutureCallback(Class<R> responseCls,
+    private static <R> FutureCallback<HttpResponse> getFutureCallback(ResponseMapper<R> responseMapper,
                                                                       CompletableFuture<R> futureResponse,
                                                                       HttpUriRequest httpRequest) {
         return new FutureCallback<HttpResponse>() {
@@ -85,14 +121,8 @@ public class DefaultHttpClient implements HttpClient, Closeable {
             public void completed(HttpResponse httpResponse) {
                 try {
                     log.info("Response received with status: {}", httpResponse.getStatusLine().getStatusCode());
-                    var responseBody = EntityUtils.toString(httpResponse.getEntity(), StandardCharsets.UTF_8);
-                    log.info("Body: {}", responseBody);
-                    if (Set.of(200, 403).contains(httpResponse.getStatusLine().getStatusCode()) && !responseBody.isBlank()) {
-                        futureResponse.complete(deserializedResponse(responseCls, responseBody));
-                    } else {
-                        futureResponse.completeExceptionally(new RuntimeException("Exception occurred!"));
-                    }
-                } catch (IOException | SerializationException exception) {
+                    futureResponse.complete(responseMapper.map(httpResponse));
+                } catch (IOException | SerializationException | RuntimeException exception) {
                     futureResponse.completeExceptionally(exception);
                 }
             }
@@ -108,6 +138,21 @@ public class DefaultHttpClient implements HttpClient, Closeable {
                 log.error("Http call cancelled for: {}", httpRequest.getURI());
                 futureResponse.completeExceptionally(new RuntimeException("Http operation cancelled"));
             }
+        };
+    }
+
+    private static <R> ResponseMapper<R> responseMapper(Class<R> responseCls) {
+        return httpResponse -> {
+            var responseBody = httpResponse.getEntity() == null
+                    ? ""
+                    : EntityUtils.toString(httpResponse.getEntity(), StandardCharsets.UTF_8);
+            log.info("Body: {}", responseBody);
+            if (httpResponse.getStatusLine().getStatusCode() >= 200
+                    && httpResponse.getStatusLine().getStatusCode() < 300
+                    && !responseBody.isBlank()) {
+                return deserializedResponse(responseCls, responseBody);
+            }
+            throw new RuntimeException("Exception occurred!");
         };
     }
 
@@ -139,7 +184,7 @@ public class DefaultHttpClient implements HttpClient, Closeable {
     }
 
     private String buildProtocol(ApiRequest request) {
-        return httpConfig.getServiceConfig(request.getService()).isSecured() ? "https://" : "http:";
+        return httpConfig.getServiceConfig(request.getService()).isSecured() ? "https://" : "http://";
     }
 
     private static String serializedRequestBody(Object object) throws SerializationException {
@@ -148,7 +193,12 @@ public class DefaultHttpClient implements HttpClient, Closeable {
 
     @Override
     public void close() throws IOException {
-        ASYNC_CLIENT.close();
+        asyncClient.close();
+    }
+
+    @FunctionalInterface
+    private interface ResponseMapper<R> {
+        R map(HttpResponse httpResponse) throws IOException, SerializationException;
     }
 
 //    private HttpRequest buildHttpRequest(ApiRequest request) {

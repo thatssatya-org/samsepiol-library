@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 
 import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -15,7 +16,10 @@ import java.util.stream.Collectors;
 @ConfigurationProperties(prefix = "http-config")
 @Data
 public class HttpConfig {
-    private Map<String, ServiceConfig> serviceConfigs;
+    private int connectTimeoutMs = 5_000;
+    private int connectionRequestTimeoutMs = 5_000;
+    private int socketTimeoutMs = 8_000;
+    private Map<String, ServiceConfig> serviceConfigs = new HashMap<>();
     private List<HttpConfigService> httpConfigServices;
 
     @Autowired
@@ -52,6 +56,8 @@ public class HttpConfig {
         public static class ApiConfig {
             private String path;
             private HttpMethod method;
+            private Integer connectionTimeoutMs;
+            private Integer readTimeoutMs;
 
             public boolean isGET() {
                 return HttpMethod.GET.equals(method);
