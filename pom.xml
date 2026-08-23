@@ -17,6 +17,8 @@
 
     <modules>
         <module>library-core</module>
+        <module>encryption</module>
+        <module>token-management</module>
         <module>http</module>
         <module>temporal</module>
         <module>library-application</module>
