@@ -16,6 +16,7 @@ import org.bson.codecs.pojo.annotations.BsonCreator;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 
 import java.util.Base64;
+import java.util.Objects;
 
 /**
  * Mongo-native representation of a {@link CredentialEnvelope}. It deliberately flattens the envelope so the
@@ -55,8 +56,8 @@ public class TokenRecordEntity extends Entity {
                 .nonceBase64(Base64.getEncoder().encodeToString(envelope.getNonce()))
                 .ciphertextBase64(Base64.getEncoder().encodeToString(envelope.getCiphertext()))
                 .encryptedAtEpochMillis(envelope.getEncryptedAtEpochMillis())
-                .previousKeyId(rotation == null ? null : rotation.getPreviousKeyId())
-                .rotatedAtEpochMillis(rotation == null ? null : rotation.getRotatedAtEpochMillis())
+                .previousKeyId(Objects.isNull(rotation) ? null : rotation.getPreviousKeyId())
+                .rotatedAtEpochMillis(Objects.isNull(rotation) ? null : rotation.getRotatedAtEpochMillis())
                 .build();
     }
 
@@ -67,7 +68,7 @@ public class TokenRecordEntity extends Entity {
 
     @JsonIgnore
     public CredentialEnvelope envelope() {
-        var rotation = previousKeyId == null ? null : CredentialRotationMetadata.builder()
+        var rotation = Objects.isNull(previousKeyId) ? null : CredentialRotationMetadata.builder()
                 .previousKeyId(previousKeyId).rotatedAtEpochMillis(rotatedAtEpochMillis).build();
         return CredentialEnvelope.builder().envelopeVersion(envelopeVersion).algorithm(algorithm).keyId(keyId)
                 .nonce(Base64.getDecoder().decode(nonceBase64)).ciphertext(Base64.getDecoder().decode(ciphertextBase64))
