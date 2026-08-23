@@ -13,6 +13,7 @@ import com.samsepiol.library.core.util.SerializationUtil;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpEntity;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -225,7 +226,7 @@ public class DefaultHttpClient implements HttpClient, Closeable {
         for (Header header : response.getAllHeaders()) {
             headers.computeIfAbsent(header.getName(), ignored -> new ArrayList<>()).add(header.getValue());
         }
-        var body = response.getEntity() == null ? "" : readBoundedBody(response.getEntity().getContent(),
+        var body = response.getEntity() == null ? "" : readBoundedBody(response.getEntity(),
                 apiConfig.getMaxResponseBodyBytes());
         return HttpResponseEnvelope.<String>builder()
                 .statusCode(response.getStatusLine().getStatusCode())
@@ -234,13 +235,23 @@ public class DefaultHttpClient implements HttpClient, Closeable {
                 .build();
     }
 
-    private static String readBoundedBody(InputStream stream, Integer configuredMaxBytes) throws IOException {
+    private static String readBoundedBody(HttpEntity entity, Integer configuredMaxBytes) throws IOException {
         var maxBytes = configuredMaxBytes == null ? 262_144 : configuredMaxBytes;
         if (maxBytes <= 0) {
             throw HttpClientException.builder().build();
         }
+        if (entity.getContentLength() > maxBytes) {
+            throw HttpClientException.builder().build();
+        }
+        if (entity.getContentLength() >= 0) {
+            return new String(EntityUtils.toByteArray(entity), StandardCharsets.UTF_8);
+        }
+        return readChunkedBody(entity.getContent(), maxBytes);
+    }
+
+    private static String readChunkedBody(InputStream stream, int maxBytes) throws IOException {
         var buffer = new java.io.ByteArrayOutputStream(Math.min(maxBytes, 8_192));
-        var chunk = new byte[Math.min(maxBytes + 1, 8_192)];
+        var chunk = new byte[Math.min(maxBytes, 8_192)];
         try (stream) {
             int read;
             while ((read = stream.read(chunk)) != -1) {

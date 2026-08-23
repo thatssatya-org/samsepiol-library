@@ -14,4 +14,13 @@ class DateTimeUtilsTest {
         assertThat(DateTimeUtils.toDefaultZoneDate(Instant.parse("2026-08-23T20:00:00Z")))
                 .hasToString("2026-08-24");
     }
+
+    @Test
+    void readsEpochMillisFromTheDefaultZoneClock() {
+        var before = System.currentTimeMillis();
+
+        var epochMillis = DateTimeUtils.currentEpochMillis();
+
+        assertThat(epochMillis).isBetween(before, System.currentTimeMillis());
+    }
 }
