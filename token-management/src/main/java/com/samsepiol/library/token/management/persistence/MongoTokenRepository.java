@@ -12,7 +12,7 @@ import jakarta.annotation.PostConstruct;
 
 @org.springframework.stereotype.Repository
 @RequiredArgsConstructor
-@ConditionalOnExpression("!'${spring.data.mongodb.host:}'.isBlank()")
+@ConditionalOnExpression("!'${spring.data.mongodb.uri:}'.isBlank() || !'${spring.data.mongodb.host:}'.isBlank()")
 public class MongoTokenRepository implements TokenRepository {
     private static final String COLLECTION_NAME = "integration-tokens";
     private final Repository repository;
