@@ -1,4 +1,4 @@
-package com.samsepiol.library.core.security.credential;
+package com.samsepiol.library.encryption.credential;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -30,55 +30,63 @@ class AesGcmCredentialEnvelopeCipherTest {
     @Test
     void encryptsDecryptsAndKeepsPlaintextOutOfThePersistedEnvelope() throws Exception {
         var cipher = cipher(Map.of("primary", KEY_ONE));
-        var envelope = cipher.encrypt(new CredentialEncryptionRequest(PLAINTEXT, "primary", AUTHENTICATED_DATA));
+        var envelope = cipher.encrypt(encryptionRequest(PLAINTEXT, "primary", AUTHENTICATED_DATA));
 
-        assertArrayEquals(PLAINTEXT, cipher.decrypt(new CredentialDecryptionRequest(envelope, AUTHENTICATED_DATA)));
+        assertArrayEquals(PLAINTEXT, cipher.decrypt(decryptionRequest(envelope, AUTHENTICATED_DATA)));
         assertNotEquals(new String(PLAINTEXT, StandardCharsets.UTF_8), new String(envelope.getCiphertext(), StandardCharsets.UTF_8));
 
         var serialized = new ObjectMapper().writeValueAsString(envelope);
         assertFalse(serialized.contains(new String(PLAINTEXT, StandardCharsets.UTF_8)));
         assertFalse(envelope.toString().contains(new String(PLAINTEXT, StandardCharsets.UTF_8)));
-        assertFalse(new CredentialEncryptionRequest(PLAINTEXT, "primary", AUTHENTICATED_DATA)
+        assertFalse(encryptionRequest(PLAINTEXT, "primary", AUTHENTICATED_DATA)
                 .toString().contains(new String(PLAINTEXT, StandardCharsets.UTF_8)));
     }
 
     @Test
     void rejectsTamperedCiphertextAndWrongKeyMaterial() {
         var sourceCipher = cipher(Map.of("primary", KEY_ONE));
-        var envelope = sourceCipher.encrypt(new CredentialEncryptionRequest(PLAINTEXT, "primary", AUTHENTICATED_DATA));
+        var envelope = sourceCipher.encrypt(encryptionRequest(PLAINTEXT, "primary", AUTHENTICATED_DATA));
         var tamperedCiphertext = envelope.getCiphertext();
         tamperedCiphertext[0] ^= 1;
-        var tampered = new CredentialEnvelope(
-                envelope.getEnvelopeVersion(), envelope.getAlgorithm(), envelope.getKeyId(), envelope.getNonce(),
-                tamperedCiphertext, envelope.getEncryptedAtEpochMillis(), envelope.getRotationMetadata());
+        var tampered = CredentialEnvelope.builder().envelopeVersion(envelope.getEnvelopeVersion()).algorithm(envelope.getAlgorithm())
+                .keyId(envelope.getKeyId()).nonce(envelope.getNonce()).ciphertext(tamperedCiphertext)
+                .encryptedAtEpochMillis(envelope.getEncryptedAtEpochMillis()).rotationMetadata(envelope.getRotationMetadata()).build();
 
         assertThrows(CredentialCryptographyException.class,
-                () -> sourceCipher.decrypt(new CredentialDecryptionRequest(tampered, AUTHENTICATED_DATA)));
+                () -> sourceCipher.decrypt(decryptionRequest(tampered, AUTHENTICATED_DATA)));
         assertThrows(CredentialCryptographyException.class,
                 () -> cipher(Map.of("primary", KEY_TWO))
-                        .decrypt(new CredentialDecryptionRequest(envelope, AUTHENTICATED_DATA)));
+                        .decrypt(decryptionRequest(envelope, AUTHENTICATED_DATA)));
         assertThrows(CredentialCryptographyException.class,
-                () -> sourceCipher.decrypt(new CredentialDecryptionRequest(envelope, "different-context".getBytes(StandardCharsets.UTF_8))));
+                () -> sourceCipher.decrypt(decryptionRequest(envelope, "different-context".getBytes(StandardCharsets.UTF_8))));
     }
 
     @Test
     void rejectsTamperedMetadataAndRotatesWithoutExposingPlaintext() {
         var cipher = cipher(Map.of("primary", KEY_ONE, "rotated", KEY_TWO));
-        var envelope = cipher.encrypt(new CredentialEncryptionRequest(PLAINTEXT, "primary", AUTHENTICATED_DATA));
-        var metadataTampered = new CredentialEnvelope(
-                envelope.getEnvelopeVersion(), envelope.getAlgorithm(), "rotated", envelope.getNonce(),
-                envelope.getCiphertext(), envelope.getEncryptedAtEpochMillis(), envelope.getRotationMetadata());
+        var envelope = cipher.encrypt(encryptionRequest(PLAINTEXT, "primary", AUTHENTICATED_DATA));
+        var metadataTampered = CredentialEnvelope.builder().envelopeVersion(envelope.getEnvelopeVersion()).algorithm(envelope.getAlgorithm())
+                .keyId("rotated").nonce(envelope.getNonce()).ciphertext(envelope.getCiphertext())
+                .encryptedAtEpochMillis(envelope.getEncryptedAtEpochMillis()).rotationMetadata(envelope.getRotationMetadata()).build();
 
         assertThrows(CredentialCryptographyException.class,
-                () -> cipher.decrypt(new CredentialDecryptionRequest(metadataTampered, AUTHENTICATED_DATA)));
+                () -> cipher.decrypt(decryptionRequest(metadataTampered, AUTHENTICATED_DATA)));
 
-        var rotated = cipher.rotate(new CredentialDecryptionRequest(envelope, AUTHENTICATED_DATA), "rotated");
-        assertArrayEquals(PLAINTEXT, cipher.decrypt(new CredentialDecryptionRequest(rotated, AUTHENTICATED_DATA)));
+        var rotated = cipher.rotate(decryptionRequest(envelope, AUTHENTICATED_DATA), "rotated");
+        assertArrayEquals(PLAINTEXT, cipher.decrypt(decryptionRequest(rotated, AUTHENTICATED_DATA)));
         assertTrue(rotated.getRotationMetadata().getPreviousKeyId().equals("primary"));
         assertDoesNotThrow(() -> Arrays.fill(rotated.getCiphertext(), (byte) 0));
     }
 
     private AesGcmCredentialEnvelopeCipher cipher(Map<String, SecretKeySpec> keys) {
-        return new AesGcmCredentialEnvelopeCipher(keyId -> keys.get(keyId));
+        return new AesGcmCredentialEnvelopeCipher(keyId -> keys.get(keyId), System::currentTimeMillis);
+    }
+
+    private CredentialEncryptionRequest encryptionRequest(byte[] plaintext, String keyId, byte[] authenticatedData) {
+        return CredentialEncryptionRequest.builder().plaintext(plaintext).keyId(keyId).authenticatedData(authenticatedData).build();
+    }
+
+    private CredentialDecryptionRequest decryptionRequest(CredentialEnvelope envelope, byte[] authenticatedData) {
+        return CredentialDecryptionRequest.builder().envelope(envelope).authenticatedData(authenticatedData).build();
     }
 }

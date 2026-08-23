@@ -1,14 +1,22 @@
 package com.samsepiol.library.token.management;
 
-import com.samsepiol.library.core.security.credential.CredentialEnvelope;
-
-import java.util.Objects;
+import com.samsepiol.library.encryption.credential.CredentialEnvelope;
+import lombok.Builder;
+import lombok.NonNull;
+import lombok.ToString;
+import lombok.Value;
 
 /** Safe write acknowledgement. It contains no token material. */
-public record TokenWriteReceipt(TokenReference reference, String keyId, long encryptedAtEpochMillis) {
+@Value
+@Builder
+@ToString
+public class TokenWriteReceipt {
+    @NonNull TokenReference reference;
+    @NonNull String keyId;
+    @NonNull Long encryptedAtEpochMillis;
+
     static TokenWriteReceipt from(TokenReference reference, CredentialEnvelope envelope) {
-        Objects.requireNonNull(reference, "reference must not be null");
-        Objects.requireNonNull(envelope, "envelope must not be null");
-        return new TokenWriteReceipt(reference, envelope.getKeyId(), envelope.getEncryptedAtEpochMillis());
+        return TokenWriteReceipt.builder().reference(reference).keyId(envelope.getKeyId())
+                .encryptedAtEpochMillis(envelope.getEncryptedAtEpochMillis()).build();
     }
 }

@@ -1,4 +1,4 @@
-package com.samsepiol.library.core.security.credential;
+package com.samsepiol.library.encryption.credential;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
@@ -7,57 +7,42 @@ import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.SecureRandom;
 import java.util.Arrays;
-import java.util.Objects;
 import java.util.function.LongSupplier;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 /**
  * JCA AES-GCM implementation of {@link CredentialEnvelopeCipher}.
  */
+@Service
+@RequiredArgsConstructor
 public final class AesGcmCredentialEnvelopeCipher implements CredentialEnvelopeCipher {
     public static final int ENVELOPE_VERSION = 1;
     public static final String ALGORITHM = "AES/GCM/NoPadding";
     private static final int NONCE_LENGTH_BYTES = 12;
     private static final int TAG_LENGTH_BITS = 128;
 
-    private final CredentialKeyResolver keyResolver;
-    private final SecureRandom secureRandom;
-    private final LongSupplier clock;
-
-    public AesGcmCredentialEnvelopeCipher(CredentialKeyResolver keyResolver) {
-        this(keyResolver, new SecureRandom(), System::currentTimeMillis);
-    }
-
-    public AesGcmCredentialEnvelopeCipher(
-            CredentialKeyResolver keyResolver,
-            SecureRandom secureRandom,
-            LongSupplier clock) {
-        this.keyResolver = Objects.requireNonNull(keyResolver, "keyResolver must not be null");
-        this.secureRandom = Objects.requireNonNull(secureRandom, "secureRandom must not be null");
-        this.clock = Objects.requireNonNull(clock, "clock must not be null");
-    }
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+    private final @NonNull CredentialKeyResolver keyResolver;
+    private final @NonNull LongSupplier clock;
 
     @Override
     public CredentialEnvelope encrypt(CredentialEncryptionRequest request) {
-        Objects.requireNonNull(request, "request must not be null");
         var nonce = new byte[NONCE_LENGTH_BYTES];
-        secureRandom.nextBytes(nonce);
+        SECURE_RANDOM.nextBytes(nonce);
         var encryptedAt = currentTime();
-        var envelope = new CredentialEnvelope(
-                ENVELOPE_VERSION,
-                ALGORITHM,
-                request.getKeyId(),
-                nonce,
-                encrypt(resolveKey(request.getKeyId()), nonce, request.getPlaintext(), request.getAuthenticatedData(),
-                        ENVELOPE_VERSION, ALGORITHM, request.getKeyId()),
-                encryptedAt,
-                null);
+        var envelope = CredentialEnvelope.builder()
+                .envelopeVersion(ENVELOPE_VERSION).algorithm(ALGORITHM).keyId(request.getKeyId()).nonce(nonce.clone())
+                .ciphertext(encrypt(resolveKey(request.getKeyId()), nonce, request.getPlaintext(), request.getAuthenticatedData(),
+                        ENVELOPE_VERSION, ALGORITHM, request.getKeyId()))
+                .encryptedAtEpochMillis(encryptedAt).build();
         Arrays.fill(nonce, (byte) 0);
         return envelope;
     }
 
     @Override
     public byte[] decrypt(CredentialDecryptionRequest request) {
-        Objects.requireNonNull(request, "request must not be null");
         var envelope = request.getEnvelope();
         validateEnvelope(envelope);
         return decrypt(resolveKey(envelope.getKeyId()), envelope.getNonce(), envelope.getCiphertext(),
@@ -66,21 +51,20 @@ public final class AesGcmCredentialEnvelopeCipher implements CredentialEnvelopeC
 
     @Override
     public CredentialEnvelope rotate(CredentialDecryptionRequest request, String targetKeyId) {
-        Objects.requireNonNull(request, "request must not be null");
         if (targetKeyId == null || targetKeyId.isBlank()) {
             throw new IllegalArgumentException("targetKeyId must not be blank");
         }
         var plaintext = decrypt(request);
         try {
-            var replacement = encrypt(new CredentialEncryptionRequest(plaintext, targetKeyId, request.getAuthenticatedData()));
-            return new CredentialEnvelope(
-                    replacement.getEnvelopeVersion(),
-                    replacement.getAlgorithm(),
-                    replacement.getKeyId(),
-                    replacement.getNonce(),
-                    replacement.getCiphertext(),
-                    replacement.getEncryptedAtEpochMillis(),
-                    new CredentialRotationMetadata(request.getEnvelope().getKeyId(), currentTime()));
+            var replacement = encrypt(CredentialEncryptionRequest.builder()
+                    .plaintext(plaintext).keyId(targetKeyId).authenticatedData(request.getAuthenticatedData()).build());
+            return CredentialEnvelope.builder()
+                    .envelopeVersion(replacement.getEnvelopeVersion()).algorithm(replacement.getAlgorithm())
+                    .keyId(replacement.getKeyId()).nonce(replacement.getNonce()).ciphertext(replacement.getCiphertext())
+                    .encryptedAtEpochMillis(replacement.getEncryptedAtEpochMillis())
+                    .rotationMetadata(CredentialRotationMetadata.builder()
+                            .previousKeyId(request.getEnvelope().getKeyId()).rotatedAtEpochMillis(currentTime()).build())
+                    .build();
         } finally {
             Arrays.fill(plaintext, (byte) 0);
         }

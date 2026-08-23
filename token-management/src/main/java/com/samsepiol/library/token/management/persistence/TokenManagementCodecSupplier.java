@@ -8,7 +8,7 @@ import java.util.List;
 
 @Service
 public class TokenManagementCodecSupplier implements CodecSupplier {
-    private static final List<Class<?>> CLASSES = List.of(TokenRecord.class);
+    private static final List<Class<?>> CLASSES = List.of(TokenRecordEntity.class);
 
     @Override
     public @NonNull List<Class<?>> getManagedClasses() {

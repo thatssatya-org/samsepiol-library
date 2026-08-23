@@ -9,6 +9,6 @@ import lombok.experimental.FieldDefaults;
 @Getter
 @RequiredArgsConstructor
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
-public abstract class LibraryException extends Exception {
+public abstract class LibraryException extends RuntimeException {
     Error error;
 }

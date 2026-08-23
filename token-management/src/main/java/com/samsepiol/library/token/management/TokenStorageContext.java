@@ -1,21 +1,24 @@
 package com.samsepiol.library.token.management;
 
-import java.util.Objects;
+import lombok.Builder;
+import lombok.NonNull;
+import lombok.ToString;
+import lombok.Value;
 
 /**
  * Server-supplied encryption context. The key identifier and reference are never accepted from token clients.
  */
-public record TokenStorageContext(TokenReference reference, String keyId) {
-    public TokenStorageContext {
-        reference = Objects.requireNonNull(reference, "reference must not be null");
-        keyId = required(keyId, "keyId");
-    }
+@Value
+@Builder
+@ToString
+public class TokenStorageContext {
+    @NonNull TokenReference reference;
+    @NonNull String keyId;
 
-    private static String required(String value, String field) {
-        var result = Objects.requireNonNull(value, field + " must not be null");
-        if (result.isBlank()) {
-            throw new IllegalArgumentException(field + " must not be blank");
+    public static TokenStorageContext required(TokenReference reference, String keyId) {
+        if (reference == null || keyId == null || keyId.isBlank()) {
+            throw new TokenManagementException();
         }
-        return result;
+        return TokenStorageContext.builder().reference(reference).keyId(keyId).build();
     }
 }

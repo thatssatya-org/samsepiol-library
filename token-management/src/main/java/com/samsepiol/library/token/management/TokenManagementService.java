@@ -4,10 +4,6 @@ import com.samsepiol.library.core.security.management.ManagementAuthorizationReq
 import lombok.NonNull;
 
 public interface TokenManagementService {
-    @NonNull
-    TokenWriteReceipt create(@NonNull TokenCreationRequest request, @NonNull TokenStorageContext context,
-                             @NonNull ManagementAuthorizationRequest authorizationRequest);
-
     <T> T useForInternalIntegration(@NonNull TokenStorageContext context,
                                     @NonNull ManagementAuthorizationRequest authorizationRequest,
                                     @NonNull TokenUse<T> tokenUse);

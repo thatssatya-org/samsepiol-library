@@ -1,13 +1,12 @@
 package com.samsepiol.library.token.management;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.exc.InvalidDefinitionException;
-import com.samsepiol.library.core.security.credential.AesGcmCredentialEnvelopeCipher;
-import com.samsepiol.library.core.security.credential.CredentialCryptographyException;
-import com.samsepiol.library.core.security.credential.CredentialDecryptionRequest;
+import com.samsepiol.library.encryption.credential.AesGcmCredentialEnvelopeCipher;
+import com.samsepiol.library.encryption.credential.CredentialCryptographyException;
+import com.samsepiol.library.encryption.credential.CredentialDecryptionRequest;
 import com.samsepiol.library.core.security.management.ManagementAuthorizationBoundary;
 import com.samsepiol.library.core.security.management.ManagementAuthorizationRequest;
-import com.samsepiol.library.token.management.persistence.TokenRecord;
+import com.samsepiol.library.token.management.persistence.TokenRecordEntity;
 import com.samsepiol.library.token.management.persistence.TokenRepository;
 import org.junit.jupiter.api.Test;
 
@@ -16,7 +15,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -35,18 +33,18 @@ class DefaultTokenManagementServiceTest {
         var repository = new InMemoryTokenRepository();
         var service = service(repository, request -> { });
         var context = context("github", "thatssatya", "fine-grained-pat");
-        var request = new TokenCreationRequest(TOKEN);
+        var request = TokenCreationRequest.builder().token(TOKEN).build();
 
         var receipt = service.create(request, context, authorization());
-        var persisted = repository.find(context.reference()).orElseThrow();
+        var persisted = repository.find(context.getReference());
 
-        assertEquals(context.reference(), receipt.reference());
-        assertEquals(context.reference(), persisted.reference());
-        assertFalse(new String(persisted.getCiphertext(), StandardCharsets.UTF_8).contains(TOKEN));
+        assertEquals(context.getReference(), receipt.getReference());
+        assertEquals(context.getReference(), persisted.reference());
+        assertFalse(persisted.getCiphertextBase64().contains(TOKEN));
         assertFalse(persisted.toString().contains(TOKEN));
         assertFalse(new ObjectMapper().writeValueAsString(persisted).contains(TOKEN));
-        assertThrows(InvalidDefinitionException.class, () -> new ObjectMapper().writeValueAsString(request));
-        assertTrue(request.toString().contains("[REDACTED]"));
+        assertFalse(new ObjectMapper().writeValueAsString(request).contains(TOKEN));
+        assertFalse(request.toString().contains(TOKEN));
         assertArrayEquals(TOKEN.toCharArray(), request.tokenCopy());
     }
 
@@ -56,13 +54,15 @@ class DefaultTokenManagementServiceTest {
         var cipher = cipher();
         var service = new DefaultTokenManagementService(cipher, repository, request -> { });
         var github = context("github", "thatssatya", "fine-grained-pat");
-        service.create(new TokenCreationRequest(TOKEN), github, authorization());
-        var envelope = repository.find(github.reference()).orElseThrow().envelope();
+        service.create(TokenCreationRequest.builder().token(TOKEN).build(), github, authorization());
+        var envelope = repository.find(github.getReference()).envelope();
         var differentScope = context("github", "other-subject", "fine-grained-pat");
 
         assertThrows(CredentialCryptographyException.class,
-                () -> cipher.decrypt(new CredentialDecryptionRequest(envelope, differentScope.reference().authenticatedData())));
-        assertDoesNotThrow(() -> cipher.decrypt(new CredentialDecryptionRequest(envelope, github.reference().authenticatedData())));
+                () -> cipher.decrypt(CredentialDecryptionRequest.builder().envelope(envelope)
+                        .authenticatedData(differentScope.getReference().authenticatedData()).build()));
+        assertDoesNotThrow(() -> cipher.decrypt(CredentialDecryptionRequest.builder().envelope(envelope)
+                .authenticatedData(github.getReference().authenticatedData()).build()));
     }
 
     @Test
@@ -71,7 +71,7 @@ class DefaultTokenManagementServiceTest {
         var authorizationCalls = new AtomicInteger();
         var service = service(repository, request -> authorizationCalls.incrementAndGet());
         var context = context("github", "thatssatya", "fine-grained-pat");
-        service.create(new TokenCreationRequest(TOKEN), context, authorization());
+        service.create(TokenCreationRequest.builder().token(TOKEN).build(), context, authorization());
         var supplied = new AtomicReference<char[]>();
 
         var outcome = service.useForInternalIntegration(context, authorization(), token -> {
@@ -100,27 +100,28 @@ class DefaultTokenManagementServiceTest {
 
     private static AesGcmCredentialEnvelopeCipher cipher() {
         var key = new SecretKeySpec(new byte[32], "AES");
-        return new AesGcmCredentialEnvelopeCipher(keyId -> key);
+        return new AesGcmCredentialEnvelopeCipher(keyId -> key, System::currentTimeMillis);
     }
 
     private static TokenStorageContext context(String namespace, String subject, String name) {
-        return new TokenStorageContext(new TokenReference(namespace, subject, name), "integration-token-key-v1");
+        return TokenStorageContext.required(new TokenReference(namespace, subject, name), "integration-token-key-v1");
     }
 
     private static ManagementAuthorizationRequest authorization() {
-        return new ManagementAuthorizationRequest("tailnet-operator", "token-management", Map.of("source", "tailnet"));
+        return ManagementAuthorizationRequest.builder().principalId("tailnet-operator").operation("token-management")
+                .attributes(Map.of("source", "tailnet")).build();
     }
 
     private static final class InMemoryTokenRepository implements TokenRepository {
-        private final Map<TokenReference, TokenRecord> records = new HashMap<>();
+        private final Map<TokenReference, TokenRecordEntity> records = new HashMap<>();
 
         @Override
-        public Optional<TokenRecord> find(TokenReference reference) {
-            return Optional.ofNullable(records.get(reference));
+        public TokenRecordEntity find(TokenReference reference) {
+            return records.get(reference);
         }
 
         @Override
-        public TokenRecord upsert(TokenRecord record) {
+        public TokenRecordEntity upsert(TokenRecordEntity record) {
             records.put(record.reference(), record);
             return record;
         }

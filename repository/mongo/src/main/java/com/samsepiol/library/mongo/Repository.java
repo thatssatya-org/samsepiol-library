@@ -6,6 +6,8 @@ import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.ReplaceOneModel;
 import com.mongodb.client.model.ReplaceOptions;
 import com.mongodb.client.model.UpdateOptions;
+import com.mongodb.client.model.IndexOptions;
+import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.Updates;
 import com.samsepiol.library.core.util.DateTimeUtils;
 import com.samsepiol.library.core.util.SerializationUtil;
@@ -116,6 +118,22 @@ public interface Repository {
         var query = new Document(SerializationUtil.convertToMap(entity));
         getCollection(collectionName).replaceOne(Filters.eq(EntityConstants.ID, entity.getId()), query, REPLACE_OPTIONS);
         return entity;
+    }
+
+    default <T extends Entity> T upsert(String collectionName, T entity, Bson filter) {
+        entity.beforeInsertOrUpdate();
+        var replacement = new Document(SerializationUtil.convertToMap(entity));
+        getCollection(collectionName).replaceOne(filter, replacement, REPLACE_OPTIONS);
+        return entity;
+    }
+
+    default void ensureUniqueIndex(String collectionName, String indexName, String... fields) {
+        try {
+            getCollection(collectionName).createIndex(Indexes.ascending(fields),
+                    new IndexOptions().unique(Boolean.TRUE).name(indexName));
+        } catch (RuntimeException ignored) {
+            // Index provisioning is an operator concern in locked-down production deployments.
+        }
     }
 
     default <T extends Entity> List<T> upsert(String collectionName, List<T> entities) {

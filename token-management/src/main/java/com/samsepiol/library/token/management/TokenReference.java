@@ -4,10 +4,12 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Objects;
+import lombok.Builder;
 
 /**
  * A server-owned logical address for one integration token. Do not construct this type from an HTTP route or body.
  */
+@Builder
 public record TokenReference(String namespace, String subject, String name) {
     public TokenReference {
         namespace = required(namespace, "namespace");

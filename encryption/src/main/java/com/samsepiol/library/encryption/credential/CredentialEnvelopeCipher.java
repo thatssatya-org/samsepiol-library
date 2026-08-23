@@ -1,4 +1,4 @@
-package com.samsepiol.library.core.security.credential;
+package com.samsepiol.library.encryption.credential;
 
 /**
  * Opaque encryption port for persistable credentials. Implementations must provide authenticated encryption.

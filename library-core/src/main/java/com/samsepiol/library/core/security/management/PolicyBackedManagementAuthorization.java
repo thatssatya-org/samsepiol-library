@@ -1,22 +1,21 @@
 package com.samsepiol.library.core.security.management;
 
-import java.util.Objects;
 import java.util.function.Predicate;
+import lombok.Builder;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 
 /**
  * Adapter for an application-owned policy. The library deliberately does not authenticate network credentials.
  */
+@Builder
+@RequiredArgsConstructor
 public final class PolicyBackedManagementAuthorization implements ManagementAuthorizationBoundary {
-    private final Predicate<ManagementAuthorizationRequest> policy;
-
-    public PolicyBackedManagementAuthorization(Predicate<ManagementAuthorizationRequest> policy) {
-        this.policy = Objects.requireNonNull(policy, "policy must not be null");
-    }
+    private final @NonNull Predicate<ManagementAuthorizationRequest> policy;
 
     @Override
-    public void requireAuthorized(ManagementAuthorizationRequest request) {
-        var validatedRequest = Objects.requireNonNull(request, "request must not be null");
-        if (!policy.test(validatedRequest)) {
+    public void requireAuthorized(@NonNull ManagementAuthorizationRequest request) {
+        if (!policy.test(request)) {
             throw new ManagementAuthorizationDeniedException();
         }
     }
