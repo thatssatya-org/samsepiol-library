@@ -8,6 +8,7 @@ import com.samsepiol.library.http.constants.AsyncExecutorPool;
 import com.samsepiol.library.http.request.ApiRequest;
 import com.samsepiol.library.http.response.HttpResponseStatus;
 import com.samsepiol.library.core.util.SerializationUtil;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.config.RequestConfig;
@@ -60,7 +61,7 @@ public class DefaultHttpClient implements HttpClient, Closeable {
     }
 
     @Override
-    public HttpResponseStatus execute(ApiRequest request) throws LibraryException {
+    public @NonNull HttpResponseStatus execute(ApiRequest request) throws LibraryException {
         return executeAsyncInternal(request, httpResponse -> {
             EntityUtils.consumeQuietly(httpResponse.getEntity());
             return new HttpResponseStatus(httpResponse.getStatusLine().getStatusCode());
@@ -68,18 +69,7 @@ public class DefaultHttpClient implements HttpClient, Closeable {
     }
 
     private <R> CompletableFuture<R> executeAsyncInternal(ApiRequest request, Class<R> responseCls) throws SerializationException {
-        return executeAsyncInternal(request, httpResponse -> {
-            var responseBody = httpResponse.getEntity() == null
-                    ? ""
-                    : EntityUtils.toString(httpResponse.getEntity(), StandardCharsets.UTF_8);
-            log.info("Body: {}", responseBody);
-            if (httpResponse.getStatusLine().getStatusCode() >= 200
-                    && httpResponse.getStatusLine().getStatusCode() < 300
-                    && !responseBody.isBlank()) {
-                return deserializedResponse(responseCls, responseBody);
-            }
-            throw new RuntimeException("Exception occurred!");
-        });
+        return executeAsyncInternal(request, responseMapper(responseCls));
     }
 
     private <R> CompletableFuture<R> executeAsyncInternal(ApiRequest request,
@@ -93,8 +83,22 @@ public class DefaultHttpClient implements HttpClient, Closeable {
 
     private HttpUriRequest buildHttpUriRequest(ApiRequest request) throws SerializationException {
         var httpRequest =   getHttpRequestBase(request);
+        configureTimeouts(request, httpRequest);
         request.getHeaders().forEach(httpRequest::setHeader);
         return httpRequest;
+    }
+
+    private void configureTimeouts(ApiRequest request, HttpRequestBase httpRequest) {
+        var apiConfig = httpConfig.getServiceConfig(request.getService()).getApiConfig(request.getApi());
+        httpRequest.setConfig(RequestConfig.custom()
+                .setConnectTimeout(apiConfig.getConnectionTimeoutMs() == null
+                        ? httpConfig.getConnectTimeoutMs()
+                        : apiConfig.getConnectionTimeoutMs())
+                .setConnectionRequestTimeout(httpConfig.getConnectionRequestTimeoutMs())
+                .setSocketTimeout(apiConfig.getReadTimeoutMs() == null
+                        ? httpConfig.getSocketTimeoutMs()
+                        : apiConfig.getReadTimeoutMs())
+                .build());
     }
 
     private HttpRequestBase getHttpRequestBase(ApiRequest request) throws SerializationException {
@@ -134,6 +138,21 @@ public class DefaultHttpClient implements HttpClient, Closeable {
                 log.error("Http call cancelled for: {}", httpRequest.getURI());
                 futureResponse.completeExceptionally(new RuntimeException("Http operation cancelled"));
             }
+        };
+    }
+
+    private static <R> ResponseMapper<R> responseMapper(Class<R> responseCls) {
+        return httpResponse -> {
+            var responseBody = httpResponse.getEntity() == null
+                    ? ""
+                    : EntityUtils.toString(httpResponse.getEntity(), StandardCharsets.UTF_8);
+            log.info("Body: {}", responseBody);
+            if (httpResponse.getStatusLine().getStatusCode() >= 200
+                    && httpResponse.getStatusLine().getStatusCode() < 300
+                    && !responseBody.isBlank()) {
+                return deserializedResponse(responseCls, responseBody);
+            }
+            throw new RuntimeException("Exception occurred!");
         };
     }
 

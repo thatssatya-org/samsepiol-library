@@ -56,6 +56,8 @@ public class HttpConfig {
         public static class ApiConfig {
             private String path;
             private HttpMethod method;
+            private Integer connectionTimeoutMs;
+            private Integer readTimeoutMs;
 
             public boolean isGET() {
                 return HttpMethod.GET.equals(method);
