@@ -54,10 +54,29 @@ public class HttpConfig {
 
         @Data
         public static class ApiConfig {
+            /**
+             * Opt-in request diagnostics for this API only. Disabled by default because HTTP requests routinely
+             * carry credentials and personal data.
+             */
+            private Boolean requestLoggingEnabled = false;
+            /**
+             * Opt-in response diagnostics for this API only. Disabled by default because provider responses can
+             * contain private data.
+             */
+            private Boolean responseLoggingEnabled = false;
             private String path;
             private HttpMethod method;
             private Integer connectionTimeoutMs;
             private Integer readTimeoutMs;
+            private Integer maxResponseBodyBytes = 262_144;
+
+            public boolean isRequestLoggingEnabled() {
+                return Boolean.TRUE.equals(requestLoggingEnabled);
+            }
+
+            public boolean isResponseLoggingEnabled() {
+                return Boolean.TRUE.equals(responseLoggingEnabled);
+            }
 
             public boolean isGET() {
                 return HttpMethod.GET.equals(method);

@@ -24,6 +24,7 @@ public class DefaultTokenManagementService implements TokenManagementService {
     private final TokenRepository tokenRepository;
     private final ManagementAuthorizationBoundary authorizationBoundary;
 
+    @Override
     public @NonNull TokenWriteReceipt create(@NonNull TokenCreationRequest request, @NonNull TokenStorageContext context,
                                              @NonNull ManagementAuthorizationRequest authorizationRequest) {
         authorizationBoundary.requireAuthorized(authorizationRequest);
