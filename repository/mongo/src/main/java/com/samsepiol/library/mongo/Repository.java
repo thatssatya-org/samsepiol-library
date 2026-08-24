@@ -49,6 +49,14 @@ public interface Repository {
                 .first();
     }
 
+    default <T extends Entity> T findOne(String collectionName, Bson filter, Bson projection, Class<T> clazz) {
+        return getCollection(collectionName, clazz)
+                .find(filter)
+                .projection(projection)
+                .limit(1)
+                .first();
+    }
+
     default <T extends Entity> List<T> findAll(String collectionName, String id, String value, Class<T> clazz) {
         return getCollection(collectionName, clazz)
                 .find(Filters.eq(id, value))
