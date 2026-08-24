@@ -3,8 +3,7 @@ package com.samsepiol.library.mongo;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.Filters;
-import com.mongodb.client.model.ReplaceOneModel;
-import com.mongodb.client.model.ReplaceOptions;
+import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
@@ -23,7 +22,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public interface Repository {
-    ReplaceOptions REPLACE_OPTIONS = new ReplaceOptions().upsert(Boolean.TRUE);
     BulkWriteOptions BULK_WRITE_OPTIONS = new BulkWriteOptions().ordered(Boolean.FALSE);
     UpdateOptions UPSERT_OPTIONS = new UpdateOptions().upsert(Boolean.TRUE);
 
@@ -115,15 +113,13 @@ public interface Repository {
 
     default <T extends Entity> T upsert(String collectionName, T entity) {
         entity.beforeInsertOrUpdate();
-        var query = new Document(SerializationUtil.convertToMap(entity));
-        getCollection(collectionName).replaceOne(Filters.eq(EntityConstants.ID, entity.getId()), query, REPLACE_OPTIONS);
+        getCollection(collectionName).updateOne(Filters.eq(EntityConstants.ID, entity.getId()), upsertQuery(entity), UPSERT_OPTIONS);
         return entity;
     }
 
     default <T extends Entity> T upsert(String collectionName, T entity, Bson filter) {
         entity.beforeInsertOrUpdate();
-        var replacement = new Document(SerializationUtil.convertToMap(entity));
-        getCollection(collectionName).replaceOne(filter, replacement, REPLACE_OPTIONS);
+        getCollection(collectionName).updateOne(filter, upsertQuery(entity), UPSERT_OPTIONS);
         return entity;
     }
 
@@ -146,15 +142,23 @@ public interface Repository {
         return entities;
     }
 
-    private static <T extends Entity> List<ReplaceOneModel<Document>> prepareBulkUpsertQuery(List<T> entities) {
+    private static <T extends Entity> Bson upsertQuery(T entity) {
+        var fields = new Document(SerializationUtil.convertToMap(entity));
+        fields.remove(EntityConstants.ID);
+        return Updates.combine(
+                new Document("$set", fields),
+                Updates.setOnInsert(EntityConstants.ID, entity.getId())
+        );
+    }
+
+    private static <T extends Entity> List<UpdateOneModel<Document>> prepareBulkUpsertQuery(List<T> entities) {
         return entities.stream()
                 .map(entity -> {
                     entity.beforeInsertOrUpdate();
-                    var update = new Document(SerializationUtil.convertToMap(entity));
-                    return new ReplaceOneModel<>(
+                    return new UpdateOneModel<Document>(
                             Filters.eq(EntityConstants.ID, entity.getId()),
-                            update,
-                            REPLACE_OPTIONS
+                            upsertQuery(entity),
+                            UPSERT_OPTIONS
                     );
                 })
                 .toList();
