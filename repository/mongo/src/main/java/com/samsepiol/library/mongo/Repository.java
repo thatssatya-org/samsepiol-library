@@ -145,10 +145,12 @@ public interface Repository {
     private static <T extends Entity> Bson upsertQuery(T entity) {
         var fields = new Document(SerializationUtil.convertToMap(entity));
         fields.remove(EntityConstants.ID);
-        return Updates.combine(
-                new Document("$set", fields),
-                Updates.setOnInsert(EntityConstants.ID, entity.getId())
-        );
+        var createdAt = fields.remove(EntityConstants.CREATED_AT);
+        var updates = new ArrayList<Bson>();
+        fields.forEach((field, value) -> updates.add(Updates.set(field, value)));
+        updates.add(Updates.setOnInsert(EntityConstants.ID, entity.getId()));
+        updates.add(Updates.setOnInsert(EntityConstants.CREATED_AT, createdAt));
+        return Updates.combine(updates);
     }
 
     private static <T extends Entity> List<UpdateOneModel<Document>> prepareBulkUpsertQuery(List<T> entities) {
